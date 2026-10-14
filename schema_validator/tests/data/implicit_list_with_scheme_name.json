@@ -1,0 +1,23 @@
+{
+  "LoTE": {
+    "LoTETag": "http://uri.etsi.org/19602/LoTETag",
+    "ListAndSchemeInformation": {
+      "LoTEVersionIdentifier": 1,
+      "LoTESequenceNumber": 1,
+      "SchemeOperatorName": [
+        {
+          "lang": "en",
+          "value": "Operator"
+        }
+      ],
+      "SchemeName": [
+        {
+          "lang": "en",
+          "value": "EU:Example list"
+        }
+      ],
+      "ListIssueDateTime": "2026-01-01T00:00:00Z",
+      "NextUpdate": "2026-06-01T00:00:00Z"
+    }
+  }
+}

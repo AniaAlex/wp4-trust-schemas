@@ -1,0 +1,646 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ETSI TS 119 602 V1.1.1 - List of Trusted Entities (LoTE), JSON binding",
+  "description": "JSON Schema for a List of Trusted Entities derived from the data model of ETSI TS 119 602 V1.1.1 (2025-11), clauses 5 and 6 and Annexes A-C. Where the text is unambiguous the schema follows the text; where the text contradicts itself (mostly component names) property names follow the ETSI Forge JSON binding (esi/x19_60201_lists_of_trusted_entities). Signing (clause 6.8) is out of scope: in the JSON binding the LoTE is the payload of a compact JAdES Baseline B signature (ETSI TS 119 182-1).",
+  "$comment": "Requirements of clauses 5-6 and Annex B that JSON Schema cannot express, to be enforced by a business-rules layer: 6.1.4 a Latin transliteration accompanies native terms that cannot be written in the Latin alphabet; 6.3.2 the sequence number starts at 1 and increases with every release; 6.3.6 the CC prefix of every SchemeName value equals SchemeTerritory, and the name is unique per operator; 6.3.13 one of the ServiceDigitalIdentities authenticates the pointed-to list; 6.3.15 NextUpdate lies after ListIssueDateTime, and a closed list (NextUpdate null) shows every service as expired; 6.4.0 TrustedEntitiesList is present exactly when an entity is or was approved; 6.4.4 ServiceHistory is in descending order of status change time; 6.6.0/6.6.3.0 a PKI-based service identity contains an X509Certificate (6.6.0) or an X509Certificate or X509SKI (6.6.3.0); 6.6.3.3 a PublicKeyValue is the key of the certificates in the same identity; 6.6.5 a StatusStartingTime is not before the list's (re)issuance; 6.7 a history identity covers the identifiers applicable in that period; 6.8.0 the signing certificate's C and O match SchemeTerritory and a SchemeOperatorName value; Annex B.2 7) multilingual strings contain no mark-up.",
+  "type": "object",
+  "properties": {
+    "LoTE": { "$ref": "#/$defs/LoTE" }
+  },
+  "required": ["LoTE"],
+  "additionalProperties": false,
+
+  "$defs": {
+
+    "LoTE": {
+      "description": "Clause 5. A LoTE: list and scheme information plus, when any entity is or was approved, the trusted entities list.",
+      "type": "object",
+      "properties": {
+        "LoTETag": { "$ref": "#/$defs/LoTETag" },
+        "ListAndSchemeInformation": { "$ref": "#/$defs/ListAndSchemeInformation" },
+        "TrustedEntitiesList": { "$ref": "#/$defs/TrustedEntitiesList" }
+      },
+      "required": ["LoTETag", "ListAndSchemeInformation"],
+      "additionalProperties": false,
+      "if": {
+        "description": "Clause 6.6.0: when HistoricalInformationPeriod is present with a non-zero value, ServiceStatus shall be present.",
+        "properties": {
+          "ListAndSchemeInformation": {
+            "properties": { "HistoricalInformationPeriod": { "minimum": 1 } },
+            "required": ["HistoricalInformationPeriod"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "TrustedEntitiesList": {
+            "items": {
+              "properties": {
+                "TrustedEntityServices": {
+                  "items": {
+                    "properties": {
+                      "ServiceInformation": { "required": ["ServiceStatus"] }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "LoTETag": {
+      "description": "Clauses 5 and 6.2. Character representation of the LoTE Tag URI. Required: clause 5 allows exactly one tag. Any URI is accepted, because the text registers no Tag URI value. The Annex A JSON schema has no tag property; the text prevails (A.1).",
+      "$ref": "#/$defs/URI"
+    },
+
+    "ListAndSchemeInformation": {
+      "description": "Clause 6.3 and Table 1. Implicit scheme information: only the LoTE-level elements. Explicit scheme information: any explicit-only element makes all explicit elements mandatory.",
+      "type": "object",
+      "properties": {
+        "LoTEVersionIdentifier": { "$ref": "#/$defs/LoTEVersionIdentifier" },
+        "LoTESequenceNumber": { "$ref": "#/$defs/LoTESequenceNumber" },
+        "LoTEType": { "$ref": "#/$defs/LoTEType" },
+        "SchemeOperatorName": { "$ref": "#/$defs/SchemeOperatorName" },
+        "SchemeOperatorAddress": { "$ref": "#/$defs/SchemeOperatorAddress" },
+        "SchemeName": { "$ref": "#/$defs/SchemeName" },
+        "SchemeInformationURI": { "$ref": "#/$defs/SchemeInformationURI" },
+        "StatusDeterminationApproach": { "$ref": "#/$defs/StatusDeterminationApproach" },
+        "SchemeTypeCommunityRules": { "$ref": "#/$defs/SchemeTypeCommunityRules" },
+        "SchemeTerritory": { "$ref": "#/$defs/SchemeTerritory" },
+        "PolicyOrLegalNotice": { "$ref": "#/$defs/PolicyOrLegalNotice" },
+        "HistoricalInformationPeriod": { "$ref": "#/$defs/HistoricalInformationPeriod" },
+        "PointersToOtherLoTE": { "$ref": "#/$defs/PointersToOtherLoTE" },
+        "ListIssueDateTime": { "$ref": "#/$defs/ListIssueDateTime" },
+        "NextUpdate": { "$ref": "#/$defs/NextUpdate" },
+        "DistributionPoints": { "$ref": "#/$defs/DistributionPoints" },
+        "SchemeExtensions": { "$ref": "#/$defs/SchemeExtensions" }
+      },
+      "required": [
+        "LoTEVersionIdentifier",
+        "LoTESequenceNumber",
+        "SchemeOperatorName",
+        "ListIssueDateTime",
+        "NextUpdate"
+      ],
+      "additionalProperties": false,
+      "if": {
+        "anyOf": [
+          { "required": ["SchemeName"] },
+          { "required": ["SchemeInformationURI"] },
+          { "required": ["StatusDeterminationApproach"] },
+          { "required": ["SchemeTypeCommunityRules"] },
+          { "required": ["PolicyOrLegalNotice"] }
+        ]
+      },
+      "then": {
+        "required": [
+          "LoTEType",
+          "SchemeOperatorAddress",
+          "SchemeName",
+          "SchemeInformationURI",
+          "StatusDeterminationApproach",
+          "SchemeTypeCommunityRules",
+          "SchemeTerritory",
+          "PolicyOrLegalNotice"
+        ]
+      }
+    },
+
+    "LoTEVersionIdentifier": {
+      "description": "Clause 6.3.1. Version of the LoTE format for this syntax binding. The text imposes no value (NOTE to 6.3.1); profiles in Annexes D-I require 1.",
+      "type": "integer"
+    },
+    "LoTESequenceNumber": {
+      "description": "Clause 6.3.2. Starts at 1 and is incremented at each release; never recycled.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "LoTEType": {
+      "description": "Clause 6.3.3. LoTE type URI (registered values in Annex C.2.1).",
+      "$ref": "#/$defs/URI",
+      "examples": [
+        "http://uri.etsi.org/19602/LoTEType/EUPIDProvidersList",
+        "http://uri.etsi.org/19602/LoTEType/EUWalletProvidersList",
+        "http://uri.etsi.org/19602/LoTEType/EUWRPACProvidersList",
+        "http://uri.etsi.org/19602/LoTEType/EUWRPRCProvidersList",
+        "http://uri.etsi.org/19602/LoTEType/EUPubEAAProvidersList",
+        "http://uri.etsi.org/19602/LoTEType/EURegistrarsAndRegistersList"
+      ]
+    },
+    "SchemeOperatorName": {
+      "description": "Clause 6.3.4. Formal name of the scheme operator.",
+      "$ref": "#/$defs/MultiLangStrings"
+    },
+    "SchemeOperatorAddress": {
+      "description": "Clause 6.3.5. Postal and electronic address of the scheme operator.",
+      "type": "object",
+      "properties": {
+        "SchemeOperatorPostalAddress": { "$ref": "#/$defs/PostalAddresses" },
+        "SchemeOperatorElectronicAddress": { "$ref": "#/$defs/ElectronicAddress" }
+      },
+      "required": ["SchemeOperatorPostalAddress", "SchemeOperatorElectronicAddress"],
+      "additionalProperties": false
+    },
+    "SchemeName": {
+      "description": "Clause 6.3.6. Each value is 'CC:name_value', CC being the SchemeTerritory code; an English version is required.",
+      "type": "array",
+      "items": {
+        "allOf": [
+          { "$ref": "#/$defs/MultiLangString" },
+          { "properties": { "value": { "pattern": "^[A-Z]{2,}:.+$" } } }
+        ]
+      },
+      "minItems": 1,
+      "contains": { "properties": { "lang": { "const": "en" } } }
+    },
+    "SchemeInformationURI": {
+      "description": "Clause 6.3.7. Where scheme-specific information (and possibly archived versions of the list) can be obtained.",
+      "$ref": "#/$defs/MultiLangURIs"
+    },
+    "StatusDeterminationApproach": {
+      "description": "Clause 6.3.8. Status determination approach URI (registered values in Annex C.2.2).",
+      "$ref": "#/$defs/URI"
+    },
+    "SchemeTypeCommunityRules": {
+      "description": "Clause 6.3.9. Scheme type/community/rules URIs (registered values in Annex C.2.3).",
+      "$ref": "#/$defs/MultiLangURIs"
+    },
+    "SchemeTerritory": {
+      "description": "Clause 6.3.10. Country or territory code as per clause 6.1.5.",
+      "$ref": "#/$defs/CountryCode"
+    },
+    "PolicyOrLegalNotice": {
+      "description": "Clause 6.3.11. Either a sequence of LoTEPolicy pointers or a sequence of LoTELegalNotice texts, not a mix; an English entry is required (clause 6.1.4).",
+      "oneOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": { "LoTEPolicy": { "$ref": "#/$defs/MultiLangURI" } },
+            "required": ["LoTEPolicy"],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "contains": { "properties": { "LoTEPolicy": { "properties": { "lang": { "const": "en" } } } } }
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": { "LoTELegalNotice": { "$ref": "#/$defs/MultiLangString" } },
+            "required": ["LoTELegalNotice"],
+            "additionalProperties": false
+          },
+          "minItems": 1,
+          "contains": { "properties": { "LoTELegalNotice": { "properties": { "lang": { "const": "en" } } } } }
+        }
+      ]
+    },
+    "HistoricalInformationPeriod": {
+      "description": "Clause 6.3.12. Retention period (a duration, hence not negative) of historical information; 65535 means never removed. Absent means history is not kept.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "PointersToOtherLoTE": {
+      "description": "Clause 6.3.13. Pointers to other relevant LoTEs or lists of LoTEs.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/OtherLoTEPointer" },
+      "minItems": 1
+    },
+    "OtherLoTEPointer": {
+      "type": "object",
+      "properties": {
+        "LoTELocation": {
+          "description": "URI of the machine processable form of the other LoTE.",
+          "$ref": "#/$defs/URI"
+        },
+        "ServiceDigitalIdentities": {
+          "description": "Digital identities of the issuer of the pointed-to LoTE.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/ServiceDigitalIdentity" },
+          "minItems": 1
+        },
+        "LoTEQualifiers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/LoTEQualifier" },
+          "minItems": 1
+        }
+      },
+      "required": ["LoTELocation", "ServiceDigitalIdentities", "LoTEQualifiers"],
+      "additionalProperties": false
+    },
+    "LoTEQualifier": {
+      "description": "Clause 6.3.13 c): LoTE type, scheme operator name, optional scheme type/community/rules, scheme territory and MIME type.",
+      "type": "object",
+      "properties": {
+        "LoTEType": { "$ref": "#/$defs/LoTEType" },
+        "SchemeOperatorName": { "$ref": "#/$defs/SchemeOperatorName" },
+        "SchemeTypeCommunityRules": { "$ref": "#/$defs/SchemeTypeCommunityRules" },
+        "SchemeTerritory": { "$ref": "#/$defs/SchemeTerritory" },
+        "MimeType": { "type": "string", "pattern": "^[a-zA-Z0-9!#$&^_.+-]+/[a-zA-Z0-9!#$&^_.+-]+(\\s*;.*)?$" }
+      },
+      "required": ["LoTEType", "SchemeOperatorName", "SchemeTerritory", "MimeType"],
+      "additionalProperties": false
+    },
+    "ListIssueDateTime": {
+      "description": "Clause 6.3.14. UTC date-time at which the LoTE was issued.",
+      "$ref": "#/$defs/DateTime"
+    },
+    "NextUpdate": {
+      "description": "Clause 6.3.15. UTC date-time by which the next update will be issued, or null for a closed LoTE.",
+      "oneOf": [
+        { "$ref": "#/$defs/DateTime" },
+        { "type": "null" }
+      ]
+    },
+    "DistributionPoints": {
+      "description": "Clause 6.3.16. Locations where the current LoTE is published.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/URI" },
+      "minItems": 1
+    },
+    "SchemeExtensions": {
+      "description": "Clause 6.3.17. Scheme extensions; format is open but each shall indicate its criticality.",
+      "type": "array",
+      "items": {
+        "allOf": [
+          { "$ref": "#/$defs/Extension" },
+          { "required": ["Critical"] }
+        ]
+      },
+      "minItems": 1
+    },
+
+    "TrustedEntitiesList": {
+      "description": "Clause 6.4. Present only if one or more entities are or were approved under the scheme.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/TrustedEntity" },
+      "minItems": 1
+    },
+    "TrustedEntity": {
+      "description": "Clause 6.4.1.",
+      "type": "object",
+      "properties": {
+        "TrustedEntityInformation": { "$ref": "#/$defs/TrustedEntityInformation" },
+        "TrustedEntityServices": { "$ref": "#/$defs/TrustedEntityServices" }
+      },
+      "required": ["TrustedEntityInformation", "TrustedEntityServices"],
+      "additionalProperties": false
+    },
+    "TrustedEntityServices": {
+      "description": "Clause 6.4.2.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/TrustedEntityService" },
+      "minItems": 1
+    },
+    "TrustedEntityService": {
+      "description": "Clause 6.4.3.",
+      "type": "object",
+      "properties": {
+        "ServiceInformation": { "$ref": "#/$defs/ServiceInformation" },
+        "ServiceHistory": { "$ref": "#/$defs/ServiceHistory" }
+      },
+      "required": ["ServiceInformation"],
+      "additionalProperties": false
+    },
+    "ServiceHistory": {
+      "description": "Clause 6.4.4. Previous statuses in descending order of status change date-time.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/ServiceHistoryInstance" },
+      "minItems": 1
+    },
+
+    "TrustedEntityInformation": {
+      "description": "Clause 6.5.",
+      "type": "object",
+      "properties": {
+        "TEName": { "$ref": "#/$defs/TEName" },
+        "TETradeName": { "$ref": "#/$defs/TETradeName" },
+        "TEAddress": { "$ref": "#/$defs/TEAddress" },
+        "TEInformationURI": { "$ref": "#/$defs/TEInformationURI" },
+        "TEInformationExtensions": { "$ref": "#/$defs/TEInformationExtensions" }
+      },
+      "required": ["TEName", "TEAddress", "TEInformationURI"],
+      "additionalProperties": false
+    },
+    "TEName": {
+      "description": "Clause 6.5.1. Name used in formal legal registrations.",
+      "$ref": "#/$defs/MultiLangStrings"
+    },
+    "TETradeName": {
+      "description": "Clause 6.5.2. Official registration identifier and/or trade name.",
+      "$ref": "#/$defs/MultiLangStrings"
+    },
+    "TEAddress": {
+      "description": "Clause 6.5.3.",
+      "type": "object",
+      "properties": {
+        "TEPostalAddress": { "$ref": "#/$defs/PostalAddresses" },
+        "TEElectronicAddress": { "$ref": "#/$defs/ElectronicAddress" }
+      },
+      "required": ["TEPostalAddress", "TEElectronicAddress"],
+      "additionalProperties": false
+    },
+    "TEInformationURI": {
+      "description": "Clause 6.5.4.",
+      "$ref": "#/$defs/MultiLangURIs"
+    },
+    "TEInformationExtensions": {
+      "description": "Clause 6.5.5. Includes the OtherAssociatedBodies extension (clause 6.5.5.1).",
+      "type": "array",
+      "items": {
+        "allOf": [
+          { "$ref": "#/$defs/Extension" },
+          {
+            "properties": {
+              "OtherAssociatedBodies": { "$ref": "#/$defs/OtherAssociatedBodies" }
+            }
+          }
+        ]
+      },
+      "minItems": 1
+    },
+
+    "OtherAssociatedBodies": {
+      "description": "Clause 6.5.5.1.0.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/AssociatedBody" },
+      "minItems": 1
+    },
+    "AssociatedBody": {
+      "description": "Clause 6.5.5.1.1.",
+      "type": "object",
+      "properties": {
+        "AssociatedBodyName": {
+          "description": "Clause 6.5.5.1.2.",
+          "$ref": "#/$defs/MultiLangStrings"
+        },
+        "AssociatedBodyTradeName": {
+          "description": "Clause 6.5.5.1.3.",
+          "$ref": "#/$defs/MultiLangStrings"
+        },
+        "AssociatedBodyAddress": {
+          "description": "Clause 6.5.5.1.4.",
+          "type": "object",
+          "properties": {
+            "AssociatedBodyPostalAddress": { "$ref": "#/$defs/PostalAddresses" },
+            "AssociatedBodyElectronicAddress": { "$ref": "#/$defs/ElectronicAddress" }
+          },
+          "required": ["AssociatedBodyPostalAddress", "AssociatedBodyElectronicAddress"],
+          "additionalProperties": false
+        },
+        "AssociatedBodyInformationURI": {
+          "description": "Clause 6.5.5.1.5.",
+          "$ref": "#/$defs/MultiLangURIs"
+        },
+        "AssociatedBodyTypeIdentifier": {
+          "description": "Clause 6.5.5.1.6.",
+          "$ref": "#/$defs/URI"
+        },
+        "AssociatedBodyInformationExtensions": {
+          "description": "Clause 6.5.5.1.7.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/Extension" },
+          "minItems": 1
+        }
+      },
+      "required": ["AssociatedBodyName"],
+      "additionalProperties": false
+    },
+
+    "ServiceInformation": {
+      "description": "Clause 6.6.",
+      "type": "object",
+      "properties": {
+        "ServiceTypeIdentifier": { "$ref": "#/$defs/ServiceTypeIdentifier" },
+        "ServiceName": { "$ref": "#/$defs/ServiceName" },
+        "ServiceDigitalIdentity": { "$ref": "#/$defs/ServiceDigitalIdentity" },
+        "ServiceStatus": { "$ref": "#/$defs/ServiceStatus" },
+        "StatusStartingTime": { "$ref": "#/$defs/StatusStartingTime" },
+        "SchemeServiceDefinitionURI": { "$ref": "#/$defs/SchemeServiceDefinitionURI" },
+        "ServiceSupplyPoints": { "$ref": "#/$defs/ServiceSupplyPoints" },
+        "ServiceDefinitionURI": { "$ref": "#/$defs/ServiceDefinitionURI" },
+        "ServiceInformationExtensions": { "$ref": "#/$defs/ServiceInformationExtensions" }
+      },
+      "required": ["ServiceName", "ServiceDigitalIdentity"],
+      "additionalProperties": false
+    },
+    "ServiceTypeIdentifier": {
+      "description": "Clause 6.6.1. Service type URI (profile-defined, e.g. http://uri.etsi.org/19602/SvcType/PID/Issuance).",
+      "$ref": "#/$defs/URI"
+    },
+    "ServiceName": {
+      "description": "Clause 6.6.2.",
+      "$ref": "#/$defs/MultiLangStrings"
+    },
+    "ServiceDigitalIdentity": {
+      "description": "Clause 6.6.3. One or more digital identifiers of the service.",
+      "type": "object",
+      "properties": {
+        "X509Certificates": {
+          "description": "Clause 6.6.3.1: 'The X509Certificate component shall be a Base64 string' holding a Base64 encoded X.509 certificate.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/Base64" },
+          "minItems": 1
+        },
+        "X509SubjectNames": {
+          "description": "Clause 6.6.3.2. Distinguished Names as strings (RFC 4514 recommended).",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        },
+        "PublicKeyValues": {
+          "description": "Clause 6.6.3.3: 'The format of the PublicKeyValue component is left open and is syntax-specific.' The text defines no JSON format, so values are not constrained.",
+          "type": "array",
+          "minItems": 1
+        },
+        "X509SKIs": {
+          "description": "Clause 6.6.3.4 (subject key identifier): its Format paragraph repeats 6.6.3.3, 'left open and is syntax-specific', so values are not constrained.",
+          "type": "array",
+          "minItems": 1
+        },
+        "OtherIds": {
+          "description": "Clause 6.6.3.5: 'The format of the OtherId component is left open.'",
+          "type": "array",
+          "minItems": 1
+        }
+      },
+      "minProperties": 1,
+      "additionalProperties": false
+    },
+    "ServiceStatus": {
+      "description": "Clause 6.6.4. Current status URI (profile-defined).",
+      "$ref": "#/$defs/URI"
+    },
+    "StatusStartingTime": {
+      "description": "Clause 6.6.5. UTC date-time at which the current status became effective.",
+      "$ref": "#/$defs/DateTime"
+    },
+    "SchemeServiceDefinitionURI": {
+      "description": "Clause 6.6.6. Service information provided by the scheme operator.",
+      "$ref": "#/$defs/MultiLangURIs"
+    },
+    "ServiceSupplyPoints": {
+      "description": "Clause 6.6.7. URIs where the service can be accessed, each optionally typed by a URI.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ServiceType": { "$ref": "#/$defs/URI" },
+          "uriValue": { "$ref": "#/$defs/URI" }
+        },
+        "required": ["uriValue"],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "ServiceDefinitionURI": {
+      "description": "Clause 6.6.8 (TE service definition URI). Service information provided by the TE.",
+      "$ref": "#/$defs/MultiLangURIs"
+    },
+    "ServiceInformationExtensions": {
+      "description": "Clause 6.6.9. Includes the ServiceUniqueIdentifier extension (clause 6.6.9.1).",
+      "type": "array",
+      "items": {
+        "allOf": [
+          { "$ref": "#/$defs/Extension" },
+          {
+            "properties": {
+              "ServiceUniqueIdentifier": { "$ref": "#/$defs/URI" }
+            }
+          }
+        ]
+      },
+      "minItems": 1
+    },
+    "ServiceHistoryInstance": {
+      "description": "Clause 6.7.",
+      "type": "object",
+      "properties": {
+        "ServiceTypeIdentifier": { "$ref": "#/$defs/ServiceTypeIdentifier" },
+        "ServiceName": { "$ref": "#/$defs/ServiceName" },
+        "ServiceDigitalIdentity": { "$ref": "#/$defs/ServiceDigitalIdentity" },
+        "ServiceStatus": { "$ref": "#/$defs/ServiceStatus" },
+        "StatusStartingTime": { "$ref": "#/$defs/StatusStartingTime" },
+        "ServiceInformationExtensions": { "$ref": "#/$defs/ServiceInformationExtensions" }
+      },
+      "required": ["ServiceName", "ServiceDigitalIdentity", "ServiceStatus", "StatusStartingTime"],
+      "additionalProperties": false
+    },
+
+    "PostalAddresses": {
+      "description": "Clause 6.3.5.1. Postal address in one or more languages; an English version is required (clause 6.1.4).",
+      "type": "array",
+      "items": { "$ref": "#/$defs/PostalAddress" },
+      "minItems": 1,
+      "contains": { "properties": { "lang": { "const": "en" } } }
+    },
+    "PostalAddress": {
+      "type": "object",
+      "properties": {
+        "lang": { "$ref": "#/$defs/LanguageTag" },
+        "StreetAddress": { "$ref": "#/$defs/PlainText" },
+        "Locality": { "$ref": "#/$defs/PlainText" },
+        "StateOrProvince": { "$ref": "#/$defs/PlainText" },
+        "PostalCode": { "$ref": "#/$defs/PlainText" },
+        "Country": {
+          "description": "Clause 6.3.5.1: 'a two-character code in accordance with clause 6.1.5 (a)', i.e. ISO 3166-1 alpha-2 with UK instead of GB, EL instead of GR, and EU.",
+          "enum": ["AD","AE","AF","AG","AI","AL","AM","AO","AQ","AR","AS","AT","AU","AW","AX","AZ","BA","BB","BD","BE","BF","BG","BH","BI","BJ","BL","BM","BN","BO","BQ","BR","BS","BT","BV","BW","BY","BZ","CA","CC","CD","CF","CG","CH","CI","CK","CL","CM","CN","CO","CR","CU","CV","CW","CX","CY","CZ","DE","DJ","DK","DM","DO","DZ","EC","EE","EG","EH","EL","ER","ES","ET","EU","FI","FJ","FK","FM","FO","FR","GA","GD","GE","GF","GG","GH","GI","GL","GM","GN","GP","GQ","GS","GT","GU","GW","GY","HK","HM","HN","HR","HT","HU","ID","IE","IL","IM","IN","IO","IQ","IR","IS","IT","JE","JM","JO","JP","KE","KG","KH","KI","KM","KN","KP","KR","KW","KY","KZ","LA","LB","LC","LI","LK","LR","LS","LT","LU","LV","LY","MA","MC","MD","ME","MF","MG","MH","MK","ML","MM","MN","MO","MP","MQ","MR","MS","MT","MU","MV","MW","MX","MY","MZ","NA","NC","NE","NF","NG","NI","NL","NO","NP","NR","NU","NZ","OM","PA","PE","PF","PG","PH","PK","PL","PM","PN","PR","PS","PT","PW","PY","QA","RE","RO","RS","RU","RW","SA","SB","SC","SD","SE","SG","SH","SI","SJ","SK","SL","SM","SN","SO","SR","SS","ST","SV","SX","SY","SZ","TC","TD","TF","TG","TH","TJ","TK","TL","TM","TN","TO","TR","TT","TV","TW","TZ","UA","UG","UK","UM","US","UY","UZ","VA","VC","VE","VG","VI","VN","VU","WF","WS","YE","YT","ZA","ZM","ZW"]
+        }
+      },
+      "required": ["lang", "StreetAddress", "Country"],
+      "additionalProperties": false
+    },
+    "ElectronicAddress": {
+      "description": "Clause 6.3.5.2. Mandatory e-mail (mailto:, RFC 2368) and web-site URIs, optional telephone (tel:) URI; an English entry is required (clause 6.1.4). The web-site is taken to be an http(s) URI.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/MultiLangURI" },
+      "minItems": 2,
+      "allOf": [
+        { "contains": { "properties": { "uriValue": { "pattern": "^mailto:" } } } },
+        { "contains": { "properties": { "uriValue": { "pattern": "^https?://" } } } },
+        { "contains": { "properties": { "lang": { "const": "en" } } } }
+      ]
+    },
+
+    "Extension": {
+      "description": "Extension whose format is left open. 'Critical' has the X.509 extension semantics: a critical extension that is not recognized causes the LoTE to be rejected.",
+      "type": "object",
+      "properties": {
+        "Critical": { "type": "boolean" }
+      }
+    },
+
+    "MultiLangString": {
+      "description": "Clause 6.1.4 and Annex B.2. Language-tagged plain text.",
+      "type": "object",
+      "properties": {
+        "lang": { "$ref": "#/$defs/LanguageTag" },
+        "value": { "$ref": "#/$defs/PlainText" }
+      },
+      "required": ["lang", "value"],
+      "additionalProperties": false
+    },
+    "MultiLangStrings": {
+      "description": "Clause 6.1.4: a sequence of multilingual character strings; lists 'shall be issued supporting at least the UK English language', so an 'en' entry is required.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/MultiLangString" },
+      "minItems": 1,
+      "contains": { "properties": { "lang": { "const": "en" } } }
+    },
+    "MultiLangURI": {
+      "description": "Clause 6.1.4 and Annex B.3. Language-tagged URI (multilingual pointer).",
+      "type": "object",
+      "properties": {
+        "lang": { "$ref": "#/$defs/LanguageTag" },
+        "uriValue": { "$ref": "#/$defs/URI" }
+      },
+      "required": ["lang", "uriValue"],
+      "additionalProperties": false
+    },
+    "MultiLangURIs": {
+      "description": "Clause 6.1.4: a sequence of multilingual pointers; an 'en' entry is required (see MultiLangStrings).",
+      "type": "array",
+      "items": { "$ref": "#/$defs/MultiLangURI" },
+      "minItems": 1,
+      "contains": { "properties": { "lang": { "const": "en" } } }
+    },
+    "LanguageTag": {
+      "description": "IETF RFC 5646 language tag (clause 6.1.4, Annex B.1). The text requires language codes in lower case but Table B.1 uses 'bg-Latn' and 'el-Latn', so the primary language subtag must be lower case and the script subtag may be title case.",
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$"
+    },
+    "PlainText": {
+      "description": "Annex B.2: non-empty text with no leading UCS signature (3), no control characters (4), no private-use characters from the BMP zone E000-F8FF or planes 0F and 10 (5), and no Tag Characters U+E0000-E007F (6).",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!\\uFEFF)[^\\u0000-\\u001F\\u007F-\\u009F\\uE000-\\uF8FF󠀀-󠁿󰀀-􏿿]+$"
+    },
+    "URI": {
+      "description": "Clause 6.1.2. URI per IETF RFC 3986.",
+      "type": "string",
+      "format": "uri",
+      "minLength": 1
+    },
+    "DateTime": {
+      "description": "Clause 6.1.3. ISO 8601 UTC date-time, seconds without fraction, 'Z' designator.",
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "CountryCode": {
+      "description": "Clause 6.1.5. Upper-case ISO 3166-1 alpha-2 code (UK for United Kingdom, EL for Greece, EU for the European Union) or a regional/multi-state code such as AP or ASIA. GB and GR are excluded: a) replaces them, and b)/c) codes may not conflict with a).",
+      "type": "string",
+      "pattern": "^[A-Z]{2,}$",
+      "not": { "enum": ["GB", "GR"] }
+    },
+    "Base64": {
+      "description": "Base64 (IETF RFC 4648, clause 4) without line breaks: groups of 4 characters, the last one padded with '=' or '=='.",
+      "type": "string",
+      "contentEncoding": "base64",
+      "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)$"
+    }
+  }
+}

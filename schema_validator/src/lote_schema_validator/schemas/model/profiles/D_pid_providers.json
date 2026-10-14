@@ -1,0 +1,502 @@
+{
+  "id": "lote-profile-D",
+  "title": "ETSI TS 119 602 V1.1.1 Annex D - PID providers list",
+  "derivation": "constraint",
+  "baseDefinition": "model/schemes/explicit.json",
+  "baseCitation": {
+    "quote": "shall comply with the scheme explicit JSON schema definition specified in Annex A",
+    "page": 46,
+    "line": 2838
+  },
+  "annex": "D",
+  "lotetype": "http://uri.etsi.org/19602/LoTEType/EUPIDProvidersList",
+  "differential": {
+    "element": [
+      {
+        "id": "D-LoTEVersionIdentifier-fixed",
+        "row": "Table D.1 LoTE version identifier",
+        "path": "LoTE.ListAndSchemeInformation.LoTEVersionIdentifier",
+        "fixedInteger": 1,
+        "citation": {
+          "quote": "The value of the LoTEVersionIdentifier component shall be \"1\".",
+          "page": 47,
+          "line": 2858
+        }
+      },
+      {
+        "id": "D-seq-1",
+        "row": "Table D.1 LoTE sequence number",
+        "path": "LoTE.ListAndSchemeInformation.LoTESequenceNumber",
+        "constraint": [
+          {
+            "key": "D-seq-1",
+            "severity": "error",
+            "human": "The first instance of the list is issued with LoTESequenceNumber 1.",
+            "expression": null,
+            "checkable": "partly: needs the list history"
+          }
+        ],
+        "citation": {
+          "quote": "LoTESequenceNumber component number set to \"1\".",
+          "page": 47,
+          "line": 2861
+        }
+      },
+      {
+        "id": "D-LoTEType-fixed",
+        "row": "Table D.1 LoTE type",
+        "path": "LoTE.ListAndSchemeInformation.LoTEType",
+        "fixedUri": "http://uri.etsi.org/19602/LoTEType/EUPIDProvidersList",
+        "citation": {
+          "quote": "http://uri.etsi.org/19602/LoTEType/EUPIDProvidersList",
+          "page": 47,
+          "line": 2863
+        }
+      },
+      {
+        "id": "D-StatusDeterminationApproach-fixed",
+        "row": "Table D.1 Status determination approach",
+        "path": "LoTE.ListAndSchemeInformation.StatusDeterminationApproach",
+        "fixedUri": "http://uri.etsi.org/19602/PIDProvidersList/StatusDetn/EU",
+        "citation": {
+          "quote": "http://uri.etsi.org/19602/PIDProvidersList/StatusDetn/EU",
+          "page": 47,
+          "line": 2875
+        }
+      },
+      {
+        "id": "D-SchemeTypeCommunityRules-fixed",
+        "row": "Table D.1 Scheme type/community/rules",
+        "path": "LoTE.ListAndSchemeInformation.SchemeTypeCommunityRules.uriValue",
+        "fixedUri": "http://uri.etsi.org/19602/PIDProviders/schemerules/EU",
+        "citation": {
+          "quote": "http://uri.etsi.org/19602/PIDProviders/schemerules/EU",
+          "page": 47,
+          "line": 2877
+        }
+      },
+      {
+        "id": "D-SchemeTerritory-fixed",
+        "row": "Table D.1 Scheme territory",
+        "path": "LoTE.ListAndSchemeInformation.SchemeTerritory",
+        "fixedString": "EU",
+        "citation": {
+          "quote": "The value of the SchemeTerritory component shall be \"EU\".",
+          "page": 47,
+          "line": 2879
+        }
+      },
+      {
+        "id": "D-next-6m",
+        "row": "Table D.1 Next update",
+        "path": "LoTE.ListAndSchemeInformation",
+        "constraint": [
+          {
+            "key": "D-next-6m",
+            "severity": "error",
+            "human": "NextUpdate is at most 6 months after ListIssueDateTime.",
+            "expression": "NextUpdate.empty() or NextUpdate <= ListIssueDateTime + 6 months",
+            "checkable": "yes: date arithmetic (Schematron; not expressible in JSON Schema)",
+            "check": {
+              "type": "months-after",
+              "component": "NextUpdate",
+              "base": "ListIssueDateTime",
+              "months": 6
+            }
+          }
+        ],
+        "citation": {
+          "quote": "The maximum value between the list issue date and time and the next update shall be 6 months.",
+          "page": 47,
+          "line": 2890
+        }
+      },
+      {
+        "id": "D-sch-info",
+        "row": "Table D.1 Scheme information URI",
+        "path": "LoTE.ListAndSchemeInformation.SchemeInformationURI",
+        "constraint": [
+          {
+            "key": "D-sch-info",
+            "severity": "error",
+            "human": "One URI for information about the list and one where all previous instances can be retrieved; one URI may serve both, so the count is not enforced.",
+            "expression": null,
+            "checkable": "no: content of the pages"
+          }
+        ],
+        "citation": {
+          "quote": "The SchemeInformationURI component shall contain:",
+          "page": 47,
+          "line": 2869
+        }
+      },
+      {
+        "id": "D-HistoricalInformationPeriod-prohibited",
+        "row": "Table D.1 Historical information period",
+        "path": "LoTE.ListAndSchemeInformation.HistoricalInformationPeriod",
+        "max": "0",
+        "citation": {
+          "quote": "The HistoricalInformationPeriod component shall not be present",
+          "page": 47,
+          "line": 2883
+        }
+      },
+      {
+        "id": "D-PointersToOtherLoTE-required",
+        "row": "Table D.1 Pointers to other LoTEs",
+        "path": "LoTE.ListAndSchemeInformation.PointersToOtherLoTE",
+        "min": 1,
+        "constraint": [
+          {
+            "key": "D-ptr-self",
+            "severity": "error",
+            "human": "One pointer designates this list itself (identified here by its LoTEType qualifier).",
+            "expression": "OtherLoTEPointer.LoTEQualifiers.LoTEQualifier.where(LoTEType = 'http://uri.etsi.org/19602/LoTEType/EUPIDProvidersList').exists()",
+            "checkable": "partly: that the location is this list itself needs the publication URL",
+            "check": {
+              "type": "contains",
+              "component": ".",
+              "nested": [
+                "LoTEQualifiers"
+              ],
+              "field": "LoTEType",
+              "match": {
+                "equals": "http://uri.etsi.org/19602/LoTEType/EUPIDProvidersList"
+              }
+            }
+          }
+        ],
+        "citation": {
+          "quote": "The PointersToOtherLoTE component shall contain a pointer to the present",
+          "page": 47,
+          "line": 2886
+        }
+      },
+      {
+        "id": "D-te-name",
+        "row": "Table D.2 TE name",
+        "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityInformation.TEName",
+        "constraint": [
+          {
+            "key": "D-te-name",
+            "severity": "error",
+            "human": "TEName is the (legal) name of the listed provider.",
+            "expression": null,
+            "checkable": "no: needs official records"
+          }
+        ],
+        "citation": {
+          "quote": "The value of the TEName component shall be the name of the",
+          "page": 47,
+          "line": 2907
+        }
+      },
+      {
+        "id": "D-trade",
+        "row": "Table D.2 TE trade name",
+        "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityInformation.TETradeName",
+        "constraint": [
+          {
+            "key": "D-trade",
+            "severity": "error",
+            "human": "The official registration identifier where one exists (organizationIdentifier / serialNumber semantics of ETSI EN 319 412-1).",
+            "expression": null,
+            "checkable": "no: needs official records"
+          }
+        ],
+        "citation": {
+          "quote": "The TETradeName component shall include an official registration",
+          "page": 48,
+          "line": 2918
+        }
+      },
+      {
+        "id": "D-te-tel",
+        "row": "Table D.2 TE address",
+        "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityInformation.TEAddress",
+        "constraint": [
+          {
+            "key": "D-te-tel",
+            "severity": "error",
+            "human": "The electronic address contains a contact phone number (tel: URI).",
+            "expression": "TEElectronicAddress.where(uriValue.startsWith('tel:')).exists()",
+            "checkable": "yes",
+            "check": {
+              "type": "contains",
+              "component": "TEElectronicAddress",
+              "field": "uriValue",
+              "match": {
+                "startsWith": [
+                  "tel:"
+                ]
+              }
+            }
+          }
+        ],
+        "citation": {
+          "quote": "contact email and contact phone number",
+          "page": 48,
+          "line": 2931
+        }
+      },
+      {
+        "id": "D-te-info-count",
+        "row": "Table D.2 TE information URI",
+        "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityInformation",
+        "constraint": [
+          {
+            "key": "D-te-info-count",
+            "severity": "error",
+            "human": "At least the policy page (a) and the Member State URI (c).",
+            "expression": "TEInformationURI.count() >= 2",
+            "checkable": "yes",
+            "check": {
+              "type": "min-items",
+              "component": "TEInformationURI",
+              "min": 2
+            }
+          },
+          {
+            "key": "D-te-info-a",
+            "severity": "error",
+            "human": "(a) An http(s) page with the provider's policies, terms and conditions.",
+            "expression": "TEInformationURI.where(uriValue.matches('^https?://') and uriValue.startsWith('http://uri.etsi.org/19602/ListOfTrustedEntities/').not()).exists()",
+            "checkable": "partly: that the page holds the policies is not checkable",
+            "check": {
+              "type": "contains",
+              "component": "TEInformationURI",
+              "field": "uriValue",
+              "match": {
+                "startsWith": [
+                  "http://",
+                  "https://"
+                ],
+                "notStartsWith": [
+                  "http://uri.etsi.org/19602/ListOfTrustedEntities/"
+                ]
+              }
+            }
+          }
+        ],
+        "citation": {
+          "quote": "The TEInformationURI component shall contain:",
+          "page": 48,
+          "line": 2934
+        }
+      },
+      {
+        "id": "D-te-cc",
+        "row": "Table D.2 TE information URI (Member State URI)",
+        "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityInformation",
+        "constraint": [
+          {
+            "key": "D-te-cc",
+            "severity": "error",
+            "human": "(c) http://uri.etsi.org/19602/ListOfTrustedEntities/PIDProvider/CC for the responsible Member State ('CC' field: Greece = EL, clause 6.1.5).",
+            "expression": "TEInformationURI.where(uriValue.matches('^http://uri\\\\.etsi\\\\.org/19602/ListOfTrustedEntities/PIDProvider/(AT|BE|BG|CY|CZ|DE|DK|EE|EL|ES|FI|FR|HR|HU|IE|IT|LT|LU|LV|MT|NL|PL|PT|RO|SE|SI|SK)$')).exists()",
+            "checkable": "yes",
+            "check": {
+              "type": "contains",
+              "component": "TEInformationURI",
+              "field": "uriValue",
+              "match": {
+                "prefix": "http://uri.etsi.org/19602/ListOfTrustedEntities/PIDProvider/",
+                "codes": [
+                  "AT",
+                  "BE",
+                  "BG",
+                  "CY",
+                  "CZ",
+                  "DE",
+                  "DK",
+                  "EE",
+                  "EL",
+                  "ES",
+                  "FI",
+                  "FR",
+                  "HR",
+                  "HU",
+                  "IE",
+                  "IT",
+                  "LT",
+                  "LU",
+                  "LV",
+                  "MT",
+                  "NL",
+                  "PL",
+                  "PT",
+                  "RO",
+                  "SE",
+                  "SI",
+                  "SK"
+                ],
+                "rest": false
+              }
+            }
+          }
+        ],
+        "citation": {
+          "quote": "\"CC\" is replaced by the ISO 3166-1 [2] Alpha 2 code of the Member State which is responsible for that",
+          "page": 48,
+          "line": 2943
+        }
+      },
+      {
+        "id": "D-assoc",
+        "row": "Table D.2 TE information extensions",
+        "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityInformation.TEInformationExtensions",
+        "constraint": [
+          {
+            "key": "D-assoc",
+            "severity": "error",
+            "human": "Where applicable, OtherAssociatedBodies names the associated body responsible for associating the PID with the wallet unit.",
+            "expression": null,
+            "checkable": "no: 'where applicable'"
+          }
+        ],
+        "citation": {
+          "quote": "Where applicable, the OtherAssociatedBody extension shall be used",
+          "page": 48,
+          "line": 2946
+        }
+      },
+      {
+        "id": "D-ServiceTypeIdentifier-values",
+        "row": "Table D.3 Service type identifier",
+        "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityServices.TrustedEntityService.ServiceInformation.ServiceTypeIdentifier",
+        "binding": {
+          "strength": "required",
+          "valueSet": [
+            "http://uri.etsi.org/19602/SvcType/PID/Issuance",
+            "http://uri.etsi.org/19602/SvcType/PID/Revocation"
+          ]
+        },
+        "citation": {
+          "quote": "to the exclusion of any other",
+          "page": 49,
+          "line": 2968
+        }
+      },
+      {
+        "id": "D-X509Certificate-required",
+        "row": "Table D.3 Service digital identity",
+        "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityServices.TrustedEntityService.ServiceInformation.ServiceDigitalIdentity.X509Certificate",
+        "min": 1,
+        "citation": {
+          "quote": "The ServiceDigitalIdentity component shall contain one or more",
+          "page": 49,
+          "line": 2975
+        }
+      },
+      {
+        "id": "D-sdi-content",
+        "row": "Table D.3 Service digital identity (certificate content)",
+        "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityServices.TrustedEntityService.ServiceInformation.ServiceDigitalIdentity",
+        "constraint": [
+          {
+            "key": "D-sdi-content",
+            "severity": "error",
+            "human": "The certificates certify the TEName and, where applicable, the TETradeName registration number.",
+            "expression": null,
+            "checkable": "partly: needs certificate parsing"
+          }
+        ],
+        "citation": {
+          "quote": "for which the certified identity data include the name",
+          "page": 49,
+          "line": 2978
+        }
+      },
+      {
+        "id": "D-ServiceStatus-prohibited",
+        "row": "Table D.3 Service current status",
+        "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityServices.TrustedEntityService.ServiceInformation.ServiceStatus",
+        "max": "0",
+        "citation": {
+          "quote": "The ServiceStatus component shall not be used.",
+          "page": 49,
+          "line": 2981
+        }
+      },
+      {
+        "id": "D-removal",
+        "row": "Table D.3 Service current status (removal)",
+        "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityServices.TrustedEntityService.ServiceInformation.ServiceStatus",
+        "constraint": [
+          {
+            "key": "D-removal",
+            "severity": "error",
+            "human": "An entity or service that loses its approval is removed from the list.",
+            "expression": null,
+            "checkable": "no: operational process"
+          }
+        ],
+        "citation": {
+          "quote": "removed from the",
+          "page": 49,
+          "line": 2993
+        }
+      },
+      {
+        "id": "D-StatusStartingTime-prohibited",
+        "row": "Table D.3 Current status starting date and time",
+        "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityServices.TrustedEntityService.ServiceInformation.StatusStartingTime",
+        "max": "0",
+        "citation": {
+          "quote": "The StatusStartingTime component shall not be used.",
+          "page": 49,
+          "line": 2994
+        }
+      },
+      {
+        "id": "D-ServiceHistory-prohibited",
+        "row": "Table D.1 Historical information period (consequence)",
+        "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityServices.TrustedEntityService.ServiceHistory",
+        "max": "0",
+        "comment": "Derived: history is not kept (Table x.1), and clause 6.4.3 says ServiceHistory 'shall not be present' when history is not retained.",
+        "citation": {
+          "quote": "historical information is not kept in the list",
+          "page": 47,
+          "line": 2884
+        }
+      },
+      {
+        "id": "D-Signature-json-prohibited",
+        "row": "D.4 Signature",
+        "path": "LoTE.Signature",
+        "json": {
+          "max": "0",
+          "from": "text",
+          "note": "In JSON the list is signed by encapsulation: a compact JAdES Baseline B signature (ETSI TS 119 182-1) whose payload is the list; the published file is the compact JWS (header.payload.signature). The Signature component is not used in JSON (6.8.0). WP4 currently signs JSON lists with a detached JWS in JSON serialization next to LoTE ({\"LoTE\": ..., \"signature\": {protected, signature}}): neither compact nor encapsulating, to be reported once a signature validator exists.",
+          "citation": {
+            "quote": "shall be signed by means of a compact JAdES Baseline B signature",
+            "page": 49,
+            "line": 3016
+          }
+        },
+        "xml": {
+          "name": "ds:Signature",
+          "from": "wp4",
+          "reason": "Annex D allows JSON only (D.1). WP4 also validates XML lists of this annex for their content, with the core's XML binding of the signature: ds:Signature inside the list (enveloped) or the list inside the signature (enveloping), 6.8.0. Such a list does not conform by format (project_decisions_vs_etsi.md #1).",
+          "note": "Optional, as in the core."
+        },
+        "validation": "not-schema-based",
+        "validated_by": "a signature validator (not built yet): envelope, header, signing certificate, cryptographic check",
+        "constraint": [
+          {
+            "key": "D-sig",
+            "severity": "error",
+            "human": "Signed with a compact JAdES Baseline B signature (ETSI TS 119 182-1).",
+            "expression": null,
+            "checkable": "yes: with a JAdES / XAdES verifier"
+          }
+        ],
+        "citation": {
+          "quote": "shall be signed by means of a compact JAdES Baseline B signature",
+          "page": 49,
+          "line": 3016
+        }
+      }
+    ]
+  }
+}

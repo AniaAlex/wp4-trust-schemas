@@ -1,0 +1,164 @@
+{
+  "description": "Registered URIs of ETSI TS 119 602 V1.1.1 Annex C.2 (EU specific LoTE profiles), as value sets.",
+  "valueSets": {
+    "LoTEType": {
+      "clause": "C.2.1",
+      "codes": [
+        {
+          "code": "http://uri.etsi.org/19602/LoTEType/EUPIDProvidersList",
+          "citation": {
+            "quote": "http://uri.etsi.org/19602/LoTEType/EUPIDProvidersList",
+            "page": 44,
+            "line": 2725
+          }
+        },
+        {
+          "code": "http://uri.etsi.org/19602/LoTEType/EUWalletProvidersList",
+          "citation": {
+            "quote": "http://uri.etsi.org/19602/LoTEType/EUWalletProvidersList",
+            "page": 44,
+            "line": 2728
+          }
+        },
+        {
+          "code": "http://uri.etsi.org/19602/LoTEType/EUWRPACProvidersList",
+          "citation": {
+            "quote": "http://uri.etsi.org/19602/LoTEType/EUWRPACProvidersList",
+            "page": 44,
+            "line": 2731
+          }
+        },
+        {
+          "code": "http://uri.etsi.org/19602/LoTEType/EUWRPRCProvidersList",
+          "citation": {
+            "quote": "http://uri.etsi.org/19602/LoTEType/EUWRPRCProvidersList",
+            "page": 44,
+            "line": 2734
+          }
+        },
+        {
+          "code": "http://uri.etsi.org/19602/LoTEType/EUPubEAAProvidersList",
+          "citation": {
+            "quote": "http://uri.etsi.org/19602/LoTEType/EUPubEAAProvidersList",
+            "page": 44,
+            "line": 2737
+          }
+        },
+        {
+          "code": "http://uri.etsi.org/19602/LoTEType/EURegistrarsAndRegistersList",
+          "citation": {
+            "quote": "http://uri.etsi.org/19602/LoTEType/EURegistrarsAndRegistersList",
+            "page": 44,
+            "line": 2740
+          }
+        }
+      ]
+    },
+    "StatusDeterminationApproach": {
+      "clause": "C.2.2",
+      "codes": [
+        {
+          "code": "http://uri.etsi.org/19602/PIDProvidersList/StatusDetn/EU",
+          "citation": {
+            "quote": "http://uri.etsi.org/19602/PIDProvidersList/StatusDetn/EU",
+            "page": 45,
+            "line": 2752
+          }
+        },
+        {
+          "code": "http://uri.etsi.org/19602/WalletProvidersList/StatusDetn/EU",
+          "citation": {
+            "quote": "http://uri.etsi.org/19602/WalletProvidersList/StatusDetn/EU",
+            "page": 45,
+            "line": 2756
+          }
+        },
+        {
+          "code": "http://uri.etsi.org/19602/WRPACProvidersList/StatusDetn/EU",
+          "citation": {
+            "quote": "http://uri.etsi.org/19602/WRPACProvidersList/StatusDetn/EU",
+            "page": 45,
+            "line": 2759
+          }
+        },
+        {
+          "code": "http://uri.etsi.org/19602/WRPRCrovidersList/StatusDetn/EU",
+          "citation": {
+            "quote": "http://uri.etsi.org/19602/WRPRCrovidersList/StatusDetn/EU",
+            "page": 45,
+            "line": 2763
+          }
+        },
+        {
+          "code": "http://uri.etsi.org/19602/PubEAAProvidersList/StatusDetn/EU",
+          "citation": {
+            "quote": "http://uri.etsi.org/19602/PubEAAProvidersList/StatusDetn/EU",
+            "page": 45,
+            "line": 2767
+          }
+        },
+        {
+          "code": "http://uri.etsi.org/19602/RegistrarsAndRegistersList/StatusDetn/EU",
+          "citation": {
+            "quote": "http://uri.etsi.org/19602/RegistrarsAndRegistersList/StatusDetn/EU",
+            "page": 45,
+            "line": 2771
+          }
+        }
+      ]
+    },
+    "SchemeTypeCommunityRules": {
+      "clause": "C.2.3",
+      "codes": [
+        {
+          "code": "http://uri.etsi.org/19602/PIDProviders/schemerules/EU",
+          "citation": {
+            "quote": "http://uri.etsi.org/19602/PIDProviders/schemerules/EU",
+            "page": 45,
+            "line": 2779
+          }
+        },
+        {
+          "code": "http://uri.etsi.org/19602/WalletProvidersList/schemerules/EU",
+          "citation": {
+            "quote": "http://uri.etsi.org/19602/WalletProvidersList/schemerules/EU",
+            "page": 45,
+            "line": 2784
+          }
+        },
+        {
+          "code": "http://uri.etsi.org/19602/WRPACProvidersList/schemerules/EU",
+          "citation": {
+            "quote": "http://uri.etsi.org/19602/WRPACProvidersList/schemerules/EU",
+            "page": 45,
+            "line": 2789
+          }
+        },
+        {
+          "code": "http://uri.etsi.org/19602/WRPRCProvidersList/schemerules/EU",
+          "citation": {
+            "quote": "http://uri.etsi.org/19602/WRPRCProvidersList/schemerules/EU",
+            "page": 45,
+            "line": 2796
+          }
+        },
+        {
+          "code": "http://uri.etsi.org/19602/PubEAAProvidersList/schemerules/EU",
+          "citation": {
+            "quote": "http://uri.etsi.org/19602/PubEAAProvidersList/schemerules/EU",
+            "page": 45,
+            "line": 2803
+          }
+        },
+        {
+          "code": "http://uri.etsi.org/19602/RegistrarsAndRegistersList/schemerules/EU",
+          "citation": {
+            "quote": "http://uri.etsi.org/19602/RegistrarsAndRegistersList/schemerules/EU",
+            "page": 45,
+            "line": 2810
+          }
+        }
+      ]
+    }
+  }
+}

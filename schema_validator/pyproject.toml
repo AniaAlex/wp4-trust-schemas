@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+[project]
+name = "wp4-lote-schema-validator"
+version = "0.1.0"
+description = "Validate lists of trusted entities (ETSI TS 119 602) against schemas generated from the text, with citations"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Anna Alexeeva" }]
+keywords = ["ETSI TS 119 602", "LoTE", "trusted lists", "validation", "eIDAS"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Text Processing :: Markup :: XML",
+]
+dependencies = [
+    "jsonschema>=4.18",
+    "xmlschema>=3.0",
+    "lxml>=5",
+    "rfc3339-validator",          # format checks of the JSON Schema (date-time)
+    "rfc3986-validator",          # format checks of the JSON Schema (uri)
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.5"]
+
+[project.scripts]
+lote-validate = "lote_schema_validator.validate:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lote_schema_validator"]     # includes schemas/: the published generated schemas (package data)
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 140
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E9", "F63", "F7", "F82"]

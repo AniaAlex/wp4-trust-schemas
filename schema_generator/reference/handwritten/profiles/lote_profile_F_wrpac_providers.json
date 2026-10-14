@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ETSI TS 119 602 V1.1.1 Annex F - WRPAC providers list (LoTE profile, JSON binding)",
+  "description": "Profile of Annex F: a LoTE valid against the core schema (1960201_json_schema_text_based.json) that also meets the additional requirements of Tables F.1-F.3.",
+  "$comment": "Not expressible in JSON Schema, to be enforced by a business-rules layer: Table F.1 LoTE sequence number: the first instance is issued with LoTESequenceNumber 1 (needs the list history). Table F.1 Next update: at most 6 months after ListIssueDateTime (date arithmetic across fields). Table F.2 TE name: the name of the provider. Table F.2 TE trade name: the official registration identifier where one exists, with the semantics of organizationIdentifier / serialNumber in ETSI EN 319 412-1. Table F.1 Scheme information URI: one URI for information about the list and one for all its previous instances (one URI may serve both, so the count is not enforced). Table F.1 Pointers to other LoTEs: the pointer designates this list itself (checked only via its LoTEType qualifier). Table F.2 TE information URI: entry (a) is the policies/terms page (only its presence as an http(s) URL is checked). Table F.3 Service digital identity: the certificates certify the TEName and, where applicable, the TETradeName identifier. Table F.3 Service current status: an entity or service that loses its approval is removed from the list. Clause F.4: signature: compact JAdES Baseline B (ETSI TS 119 182-1).",
+  "allOf": [
+    {
+      "$ref": "../1960201_json_schema_text_based.json"
+    }
+  ],
+  "properties": {
+    "LoTE": {
+      "properties": {
+        "ListAndSchemeInformation": {
+          "description": "Table F.1. Profile lists are scheme-explicit (clause F.1), so every explicit element is required.",
+          "properties": {
+            "LoTEVersionIdentifier": {
+              "description": "Table F.1, clause 6.3.1: shall be 1.",
+              "const": 1
+            },
+            "LoTEType": {
+              "description": "Table F.1, clause 6.3.3.",
+              "const": "http://uri.etsi.org/19602/LoTEType/EUWRPACProvidersList"
+            },
+            "StatusDeterminationApproach": {
+              "description": "Table F.1, clause 6.3.8.",
+              "const": "http://uri.etsi.org/19602/WRPACProvidersList/StatusDetn/EU"
+            },
+            "SchemeTypeCommunityRules": {
+              "description": "Table F.1, clause 6.3.9.",
+              "items": {
+                "properties": {
+                  "uriValue": {
+                    "const": "http://uri.etsi.org/19602/WRPACProvidersList/schemerules/EU"
+                  }
+                }
+              }
+            },
+            "SchemeTerritory": {
+              "description": "Table F.1, clause 6.3.10.",
+              "const": "EU"
+            },
+            "HistoricalInformationPeriod": {
+              "description": "Table F.1, clause 6.3.12: shall not be present (history not kept).",
+              "not": {}
+            },
+            "PointersToOtherLoTE": {
+              "description": "Table F.1, clause 6.3.13: shall contain a pointer to the WRPAC providers list itself (checked here as a pointer qualified with this profile's LoTEType).",
+              "contains": {
+                "properties": {
+                  "LoTEQualifiers": {
+                    "contains": {
+                      "properties": {
+                        "LoTEType": {
+                          "const": "http://uri.etsi.org/19602/LoTEType/EUWRPACProvidersList"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": [
+            "LoTEType",
+            "SchemeOperatorAddress",
+            "SchemeName",
+            "SchemeInformationURI",
+            "StatusDeterminationApproach",
+            "SchemeTypeCommunityRules",
+            "SchemeTerritory",
+            "PolicyOrLegalNotice",
+            "PointersToOtherLoTE"
+          ]
+        },
+        "TrustedEntitiesList": {
+          "items": {
+            "properties": {
+              "TrustedEntityInformation": {
+                "description": "Table F.2",
+                "properties": {
+                  "TEAddress": {
+                    "description": "Table F.2, clause 6.5.3: postal address plus contact e-mail and contact phone number.",
+                    "properties": {
+                      "TEElectronicAddress": {
+                        "description": "Contact phone number (c. 6.5.3 b).",
+                        "contains": {
+                          "properties": {
+                            "uriValue": {
+                              "pattern": "^tel:"
+                            }
+                          },
+                          "required": [
+                            "uriValue"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "TEInformationURI": {
+                    "description": "Table F.2, clause 6.5.4: the policies/terms web page (a) and the URI http://uri.etsi.org/19602/ListOfTrustedEntities/WRPACProvider/CC (c).",
+                    "minItems": 2,
+                    "allOf": [
+                      {
+                        "description": "Policies, terms and conditions web page (a).",
+                        "contains": {
+                          "properties": {
+                            "uriValue": {
+                              "pattern": "^https?://(?!uri\\.etsi\\.org/19602/ListOfTrustedEntities/)"
+                            }
+                          },
+                          "required": [
+                            "uriValue"
+                          ]
+                        }
+                      },
+                      {
+                        "description": "Responsible Member State URI (c).",
+                        "contains": {
+                          "properties": {
+                            "uriValue": {
+                              "pattern": "^http://uri\\.etsi\\.org/19602/ListOfTrustedEntities/WRPACProvider/(AT|BE|BG|CY|CZ|DE|DK|EE|EL|ES|FI|FR|HR|HU|IE|IT|LT|LU|LV|MT|NL|PL|PT|RO|SE|SI|SK)$"
+                            }
+                          },
+                          "required": [
+                            "uriValue"
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "TrustedEntityServices": {
+                "items": {
+                  "properties": {
+                    "ServiceInformation": {
+                      "description": "Table F.3",
+                      "properties": {
+                        "ServiceTypeIdentifier": {
+                          "description": "Table F.3, clause 6.6.1: to the exclusion of any other.",
+                          "enum": [
+                            "http://uri.etsi.org/19602/SvcType/WRPAC/Issuance",
+                            "http://uri.etsi.org/19602/SvcType/WRPAC/Revocation"
+                          ]
+                        },
+                        "ServiceDigitalIdentity": {
+                          "description": "Table F.3, clause 6.6.3: shall contain one or more X.509 certificates.",
+                          "required": [
+                            "X509Certificates"
+                          ]
+                        },
+                        "ServiceStatus": {
+                          "description": "Table F.3, clause 6.6.4: shall not be used.",
+                          "not": {}
+                        },
+                        "StatusStartingTime": {
+                          "description": "Table F.3, clause 6.6.5: shall not be used.",
+                          "not": {}
+                        }
+                      }
+                    },
+                    "ServiceHistory": {
+                      "description": "Table F.1 (clause 6.3.12): historical information is not kept in the list; clause 6.4.3: when history information is not retained by the scheme operator, ServiceHistory shall not be present.",
+                      "not": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

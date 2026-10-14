@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListOfTrustedEntities xmlns="http://uri.etsi.org/019602/v1#" LoTETag="http://uri.etsi.org/19602/LoTETag"><LoTEVersionIdentifier>1</LoTEVersionIdentifier><LoTESequenceNumber>1</LoTESequenceNumber><SchemeOperatorName><Name xml:lang="en">Operator</Name></SchemeOperatorName><ListIssueDateTime>2026-01-01T00:00:00Z</ListIssueDateTime><NextUpdate><dateTime>2026-06-01T00:00:00Z</dateTime></NextUpdate></ListOfTrustedEntities>

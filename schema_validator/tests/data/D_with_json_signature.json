@@ -1,0 +1,160 @@
+{
+  "LoTE": {
+    "LoTETag": "http://uri.etsi.org/19602/LoTETag",
+    "ListAndSchemeInformation": {
+      "LoTEVersionIdentifier": 1,
+      "LoTESequenceNumber": 1,
+      "LoTEType": "http://uri.etsi.org/19602/LoTEType/EUPIDProvidersList",
+      "SchemeOperatorName": [
+        {
+          "lang": "en",
+          "value": "European Commission"
+        }
+      ],
+      "SchemeOperatorAddress": {
+        "SchemeOperatorPostalAddress": [
+          {
+            "lang": "en",
+            "StreetAddress": "Rue de la Loi 200",
+            "Locality": "Brussels",
+            "Country": "BE"
+          }
+        ],
+        "SchemeOperatorElectronicAddress": [
+          {
+            "lang": "en",
+            "uriValue": "mailto:x@ec.europa.eu"
+          },
+          {
+            "lang": "en",
+            "uriValue": "https://ec.europa.eu"
+          }
+        ]
+      },
+      "SchemeName": [
+        {
+          "lang": "en",
+          "value": "EU:EUPIDProvidersList"
+        }
+      ],
+      "SchemeInformationURI": [
+        {
+          "lang": "en",
+          "uriValue": "https://ec.europa.eu/lote/info"
+        },
+        {
+          "lang": "en",
+          "uriValue": "https://ec.europa.eu/lote/history"
+        }
+      ],
+      "StatusDeterminationApproach": "http://uri.etsi.org/19602/PIDProvidersList/StatusDetn/EU",
+      "SchemeTypeCommunityRules": [
+        {
+          "lang": "en",
+          "uriValue": "http://uri.etsi.org/19602/PIDProviders/schemerules/EU"
+        }
+      ],
+      "SchemeTerritory": "EU",
+      "PolicyOrLegalNotice": [
+        {
+          "LoTEPolicy": {
+            "lang": "en",
+            "uriValue": "https://ec.europa.eu/policy"
+          }
+        }
+      ],
+      "ListIssueDateTime": "2025-11-01T10:00:00Z",
+      "NextUpdate": "2026-05-01T10:00:00Z",
+      "PointersToOtherLoTE": [
+        {
+          "LoTELocation": "https://ec.europa.eu/lote.json",
+          "ServiceDigitalIdentities": [
+            {
+              "X509Certificates": [
+                "MIIBszCCAVmgAwIBAgIUQQ=="
+              ]
+            }
+          ],
+          "LoTEQualifiers": [
+            {
+              "LoTEType": "http://uri.etsi.org/19602/LoTEType/EUPIDProvidersList",
+              "SchemeOperatorName": [
+                {
+                  "lang": "en",
+                  "value": "EC"
+                }
+              ],
+              "SchemeTerritory": "EU",
+              "MimeType": "application/jose"
+            }
+          ]
+        }
+      ]
+    },
+    "TrustedEntitiesList": [
+      {
+        "TrustedEntityInformation": {
+          "TEName": [
+            {
+              "lang": "en",
+              "value": "Provider BE"
+            }
+          ],
+          "TEAddress": {
+            "TEPostalAddress": [
+              {
+                "lang": "en",
+                "StreetAddress": "Rue de la Loi 200",
+                "Locality": "Brussels",
+                "Country": "BE"
+              }
+            ],
+            "TEElectronicAddress": [
+              {
+                "lang": "en",
+                "uriValue": "mailto:c@p.be"
+              },
+              {
+                "lang": "en",
+                "uriValue": "https://p.be"
+              },
+              {
+                "lang": "en",
+                "uriValue": "tel:+3221234567"
+              }
+            ]
+          },
+          "TEInformationURI": [
+            {
+              "lang": "en",
+              "uriValue": "https://p.be/terms"
+            },
+            {
+              "lang": "en",
+              "uriValue": "http://uri.etsi.org/19602/ListOfTrustedEntities/PIDProvider/BE"
+            }
+          ]
+        },
+        "TrustedEntityServices": [
+          {
+            "ServiceInformation": {
+              "ServiceTypeIdentifier": "http://uri.etsi.org/19602/SvcType/PID/Issuance",
+              "ServiceName": [
+                {
+                  "lang": "en",
+                  "value": "Service"
+                }
+              ],
+              "ServiceDigitalIdentity": {
+                "X509Certificates": [
+                  "MIIBszCCAVmgAwIBAgIUQQ=="
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "Signature": "eyJhbGciOiJFUzI1NiJ9..c2ln"
+  }
+}

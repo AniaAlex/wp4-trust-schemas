@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+[project]
+name = "wp4-lote-schema-generator"
+version = "0.1.0"
+description = "Generate LoTE schemas (JSON Schema, XSD, Schematron) from the text of ETSI TS 119 602 V1.1.1"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Anna Alexeeva" }]
+keywords = ["ETSI TS 119 602", "LoTE", "trusted lists", "JSON Schema", "XSD", "Schematron", "eIDAS"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Text Processing :: Markup :: XML",
+]
+dependencies = [
+    "jsonschema>=4.18",
+    "xmlschema>=3.0",
+    "lxml>=5",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "rfc3339-validator", "rfc3986-validator", "ruff>=0.5"]
+
+[project.scripts]
+lote-schemas = "lote_schema_generator.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lote_schema_generator"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 140
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E9", "F63", "F7", "F82"]   # syntax errors and undefined names; the code base predates a style guide
