@@ -11,7 +11,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from .paths import MODEL_DIR, ROOT, SNAPSHOT, TRACK_GEN, VALIDATOR_SCHEMAS
+from .paths import MODEL, PROFILES_DIR, ROOT, SNAPSHOT, TRACK_GEN, VALIDATOR_SCHEMAS
 
 STEPS = [
     ("build_model", []),                       # core model, citations from sources.py
@@ -39,17 +39,21 @@ def build(quiet=False):
 
 
 def publish(target=VALIDATOR_SCHEMAS, quiet=False):
-    """Copy what the validator needs into its package data: both tracks (snapshot model, schemas, profiles) and the
-    model files it cites (scheme differentials, profile overlays). The target is replaced, so it holds no stale files."""
+    """Copy what the validator needs into its package data. The target is replaced, so it holds no stale files.
+
+        <track>/                 the track's generated schemas (explicit/ also holds the profile schemas)
+        model/lote_model.json    the core model both tracks derive from
+        model/<track>/           the track's snapshot; model/explicit/profiles/ the annex overlays
+    """
     target = Path(target)
     if target.exists():
         shutil.rmtree(target)
     for track in ("explicit", "implicit"):
-        shutil.copytree(Path(SNAPSHOT[track]).parent, target / track / "model")
-        shutil.copytree(TRACK_GEN[track], target / track / "generated")
-    shutil.copytree(Path(MODEL_DIR) / "schemes", target / "model" / "schemes")
-    shutil.copytree(Path(MODEL_DIR) / "profiles", target / "model" / "profiles")
-    shutil.copy2(Path(MODEL_DIR) / "lote_model.json", target / "model" / "lote_model.json")
+        shutil.copytree(TRACK_GEN[track], target / track)
+        (target / "model" / track).mkdir(parents=True)
+        shutil.copy2(SNAPSHOT[track], target / "model" / track)
+    shutil.copytree(PROFILES_DIR, target / "model" / "explicit" / "profiles")
+    shutil.copy2(MODEL, target / "model" / "lote_model.json")
     (target / "__init__.py").write_text('"""Generated schemas, published by `lote-schemas publish`. Do not edit."""\n')
     if not quiet:
         n = sum(1 for p in target.rglob("*") if p.is_file())

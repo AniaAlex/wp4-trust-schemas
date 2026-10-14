@@ -8,8 +8,9 @@ Outputs:
   explicit/model/lote_model_explicit.json                 snapshots: the core with the differential applied, read by the
   implicit/model/lote_model_implicit.json                 generators (gen_json.py, gen_xsd.py) and by the profiles D-I
 
-Snapshot semantics: 'min' raises the occurrence; 'max: "0"' removes the component, so the track's schemas do not allow it
-at all. A changed component records the rule in 'scheme' (id, row, citation), so a validation report can cite Table 1.
+Snapshot semantics: 'min' raises the occurrence; 'max: "0"' keeps the component with max 0, and the generators read the
+snapshot through allowed(), so the track's schemas do not allow it at all. A changed component records the rule in
+'scheme' (id, row, citation), so a validation report can cite Table 1 for a required and for a forbidden component.
 Core constraints the track's structure already decides (R-Table1, R-SchemeInfoPlacement) move to 'superseded'.
 
 Checks (the build fails otherwise):
@@ -64,6 +65,14 @@ def elements(track):
                comment="'/' in the implicit column: shall not be present.") for n in IMPLICIT_FORBIDDEN]
 
 
+def allowed(model):
+    """The model without the components its track forbids (max 0): what the schemas and profiles are generated from."""
+    m = copy.deepcopy(model)
+    for s in m["structures"].values():
+        s["components"] = [c for c in s["components"] if c.get("max") != 0]
+    return m
+
+
 TITLE = {"explicit": "Explicit scheme information: the LoTE describes its scheme itself (Table 1, explicit column)",
          "implicit": "Implicit scheme information: the scheme is known out of band (Table 1, implicit column)"}
 
@@ -94,7 +103,7 @@ def superseded(snap):
     schemas of the track carry no dead rules: a check that names a component the track removed, or a co-occurrence whose
     required components are all mandatory in the track."""
     for sname, s in snap["structures"].items():
-        names = {c["name"]: c for c in s["components"]}
+        names = {c["name"]: c for c in s["components"] if c.get("max") != 0}
         keep = []
         for c in s.get("constraint", []):
             ck = c.get("check") or {}
@@ -136,10 +145,10 @@ def main():
                 errors.append(f"{where}: prohibits a mandatory component")
             s_struct, s_comp = resolve(snap, e["path"], errors, where)
             if e.get("max") == "0":
-                snap["structures"][s_struct]["components"].remove(s_comp)
+                s_comp["max"] = 0
             else:
                 s_comp["min"] = e["min"]
-                s_comp["scheme"] = {"id": e["id"], "row": e["row"], "citation": e["citation"]}
+            s_comp["scheme"] = {"id": e["id"], "row": e["row"], "citation": e["citation"]}
         superseded(snap)
         diff = {"id": f"lote-scheme-{track}", "title": TITLE[track], "derivation": "constraint",
                 "baseDefinition": "model/lote_model.json", "differential": {"element": els}}
@@ -154,7 +163,7 @@ def main():
         os.makedirs(os.path.dirname(SNAPSHOT[track]), exist_ok=True)
         with open(SNAPSHOT[track], "w", encoding="utf-8") as f:
             json.dump(snap, f, indent=2, ensure_ascii=False); f.write("\n")
-        n = sum(len(s["components"]) for s in snap["structures"].values())
+        n = sum(len(s["components"]) for s in allowed(snap)["structures"].values())
         print(f"{track}: {len(els)} differential elements; snapshot {os.path.relpath(SNAPSHOT[track], ROOT)} ({n} components)")
     if errors:
         print("\n".join(errors)); sys.exit(1)

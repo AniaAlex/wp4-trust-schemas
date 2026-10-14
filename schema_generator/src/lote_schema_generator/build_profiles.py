@@ -25,6 +25,7 @@ Checks (the build fails otherwise):
 import json, os, re, sys
 
 from . import spec_text as bm                              # spec index and quote normaliser
+from .build_schemes import allowed
 from .paths import HANDWRITTEN_PROFILES, MODEL_DIR, SNAPSHOT
 
 MODEL = SNAPSHOT["explicit"]                                # the profiles narrow the explicit track (x.1)
@@ -463,7 +464,7 @@ def check_against_profile_schema(a, elements, model):
 
 # ------------------------------------------------------------------ build
 def main():
-    model = Model(json.load(open(MODEL, encoding="utf-8")))
+    model = Model(allowed(json.load(open(MODEL, encoding="utf-8"))))
     text, pos_line, page_of_line = bm.load_spec()
     order = "CDEFGHI"
     heads = {x: text.rfind(f"Annex {x} (normative)") for x in order}

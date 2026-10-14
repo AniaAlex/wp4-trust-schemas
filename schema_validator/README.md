@@ -28,24 +28,53 @@ Exit code of `lote-validate`: `0` valid, `1` failures, `2` usage error.
 ## Example finding
 
 ```
-[profile-D] D-te-tel
+ERROR: [profile-D] D-te-tel
   at   /lote:ListOfTrustedEntities/lote:TrustedEntitiesList/lote:TrustedEntity[1]/lote:TrustedEntityInformation/lote:TEAddress
   why  The electronic address contains a contact phone number (tel: URI).
   spec Table D.2 TE address, p. 48, line 2931: "contact email and contact phone number"
 ```
 
+## Rule ids
+
+Every finding has a rule id from the model, and its citation is looked up by that id. Nothing is matched by element name alone.
+
+| Finding from | Rule id | Example |
+|---|---|---|
+| Profile (Annexes D–I) | the overlay element's id | `D-LoTEType-fixed`, `D-Signature-json-prohibited` |
+| Core rule | the model constraint's key, or the Schematron pattern | `R-StatusWithHistory`, `ElectronicAddressContent` |
+| Track rule (Table 1, 6.3.0) | the `scheme` id of the component in the track's model | `EXP-SchemeName-required`, `EXP-NextUpdate-prohibited`, `IMP-SchemeName-prohibited` |
+| XSD or JSON Schema error | the model place of the error's location, plus what is wrong | `PostalAddress-Country-required`, `TEAddress-ElectronicAddress-not-allowed`, `ServiceInformation-ServiceName-value`, `LoTE-Id-not-allowed`, `LoTE-root` |
+
+For XSD and JSON Schema errors, the error's location in the list (the element path or the JSON path) is followed through the track's model, one step at a time, to the structure or component it is in. Helper elements inside a value (`Name`, `URI`, `dateTime`) belong to their component, so an empty `URI` in an electronic address is `SchemeOperatorAddress-ElectronicAddress-value` and cites clause 6.3.5.2. A forbidden component (`max: 0` in the track model) is found in the structure where the error occurs, so `NextUpdate` directly in an explicit list cites 6.3.0, while a `NextUpdate` inside a `PostalAddress` is `PostalAddress-NextUpdate-not-allowed`.
+
+## A wrong root element
+
+XSD validation starts at the root, and the profile Schematron rules name their elements from the root, so a list whose root element is wrong would otherwise get no further checks. When the root is not `lote:ListOfTrustedEntities` but its children are LoTE components in the LoTE namespace, `lote-validate` reports `LoTE-root` and then checks the rest of the list as if the root were right. Only the root's name is changed, in memory: the file is not modified and nothing is written. Locations in the report are those of the file (`/TrustedEntitiesList/lote:ListAndSchemeInformation/...`), the report says that the root was corrected, and `--json` has `"root_corrected": true`. The list still fails (exit code `1`). A root around content that is not a LoTE is reported as `LoTE-root` only.
+
 ## Layers
 
 | Layer | XML | JSON |
 |---|---|---|
-| Track structure | `schemas/<track>/generated/lote_core.xsd` | `schemas/<track>/generated/lote_core.schema.json` |
-| Track rules | `schemas/<track>/generated/lote_core.sch` | (in the JSON Schema) |
-| Profile | `schemas/explicit/generated/profiles/*.sch` | `schemas/explicit/generated/profiles/*.json` |
+| Track structure | `schemas/<track>/lote_core.xsd` | `schemas/<track>/lote_core.schema.json` |
+| Track rules | `schemas/<track>/lote_core.sch` | (in the JSON Schema) |
+| Profile | `schemas/explicit/profiles/*.sch` | `schemas/explicit/profiles/*.json` |
 | Rules JSON Schema cannot express | (in the Schematron) | the profile's `x-rules-layer` checks, e.g. the 6-month `NextUpdate` rule |
 
 ## Schemas
 
-[src/lote_schema_validator/schemas/](src/lote_schema_validator/schemas/) is package data: a copy of the generator's output (both tracks with their model snapshots and schemas, the D–I profiles, and the model files the citations come from). It is written by `lote-schemas publish` in the generator project; do not edit it. Set `LOTE_SCHEMAS_DIR` to validate against another copy.
+[src/lote_schema_validator/schemas/](src/lote_schema_validator/schemas/) is package data: a copy of the generator's output. It is laid out as follows:
+
+```
+schemas/
+  explicit/            the explicit track's schemas; profiles/ the Annex D–I profile schemas
+  implicit/            the implicit track's schemas
+  model/               the model files the citations come from (never used to decide validity)
+    lote_model.json    the core model both tracks derive from
+    explicit/          the track's model (lote_model_explicit.json); profiles/ the Annex D–I overlays
+    implicit/          the track's model (lote_model_implicit.json)
+```
+
+It is written by `lote-schemas publish` in the generator project; do not edit it. Set `LOTE_SCHEMAS_DIR` to validate against another copy.
 
 ## Tests
 

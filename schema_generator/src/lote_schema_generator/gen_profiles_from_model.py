@@ -28,6 +28,7 @@ Rule ids: '<annex>-<component>-<required|prohibited|fixed|values>' for structura
 import argparse, json, os, re
 from xml.sax.saxutils import escape, quoteattr
 
+from .build_schemes import allowed
 from .paths import PROFILES_DIR, PROFILES_GEN, ROOT, SNAPSHOT  # noqa: F401
 
 MODEL = SNAPSHOT["explicit"]                                 # the profiles narrow the explicit track (x.1)
@@ -329,7 +330,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--names", choices=["current", "text"], default="current")
     a = ap.parse_args()
-    model = json.load(open(MODEL, encoding="utf-8"))
+    model = allowed(json.load(open(MODEL, encoding="utf-8")))
     R = Steps(model, a.names)
     os.makedirs(OUT, exist_ok=True)
     for fn in sorted(os.listdir(OVERLAYS)):

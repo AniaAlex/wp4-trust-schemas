@@ -752,6 +752,171 @@
           }
         },
         {
+          "name": "LoTEVersionIdentifier",
+          "min": 0,
+          "max": 0,
+          "value": "integer",
+          "note": "Direct placement: only in a list without ListAndSchemeInformation (implicit scheme information, 6.3.0).",
+          "source": {
+            "id": "6.3.1/LoTEVersionIdentifier",
+            "clause": "6.3.1",
+            "text_names": [
+              "LoTEVersionIdentifier"
+            ],
+            "citations": [
+              {
+                "quote": "The LoTEVersionIdentifier component shall contain an integer.",
+                "line": 1019,
+                "page": 17
+              }
+            ]
+          },
+          "scheme": {
+            "id": "EXP-LoTEVersionIdentifier-prohibited",
+            "row": "6.3.0 List information placed directly in the list",
+            "citation": {
+              "quote": "In case the LoTE does not contain this component, information about the list itself shall be provided within the list directly through the presence of the LoTEVersionIdentifier, the LoTESequenceNumber, the SchemeOperatorName, the ListIssueDateTime, and the NextUpdate elements.",
+              "page": 16,
+              "line": 912
+            }
+          }
+        },
+        {
+          "name": "LoTESequenceNumber",
+          "min": 0,
+          "max": 0,
+          "value": "positive-integer",
+          "note": "Direct placement: only in a list without ListAndSchemeInformation (implicit scheme information, 6.3.0).",
+          "source": {
+            "id": "6.3.2/LoTESequenceNumber",
+            "clause": "6.3.2",
+            "text_names": [
+              "LoTESequenceNumber"
+            ],
+            "citations": [
+              {
+                "quote": "At the first release of the LoTE, the value of the sequence number shall be 1.",
+                "line": 1051,
+                "page": 18
+              }
+            ]
+          },
+          "scheme": {
+            "id": "EXP-LoTESequenceNumber-prohibited",
+            "row": "6.3.0 List information placed directly in the list",
+            "citation": {
+              "quote": "In case the LoTE does not contain this component, information about the list itself shall be provided within the list directly through the presence of the LoTEVersionIdentifier, the LoTESequenceNumber, the SchemeOperatorName, the ListIssueDateTime, and the NextUpdate elements.",
+              "page": 16,
+              "line": 912
+            }
+          }
+        },
+        {
+          "name": "SchemeOperatorName",
+          "min": 0,
+          "max": 0,
+          "value": "multilang-texts",
+          "note": "Direct placement: only in a list without ListAndSchemeInformation (implicit scheme information, 6.3.0).",
+          "source": {
+            "id": "6.3.4/SchemeOperatorName",
+            "clause": "6.3.4",
+            "text_names": [
+              "SchemeOperatorName"
+            ],
+            "citations": [
+              {
+                "quote": "The SchemeOperatorName component shall contain a sequence of multilingual character strings (see clause 6.1.4).",
+                "line": 1082,
+                "page": 18
+              }
+            ]
+          },
+          "scheme": {
+            "id": "EXP-SchemeOperatorName-prohibited",
+            "row": "6.3.0 List information placed directly in the list",
+            "citation": {
+              "quote": "In case the LoTE does not contain this component, information about the list itself shall be provided within the list directly through the presence of the LoTEVersionIdentifier, the LoTESequenceNumber, the SchemeOperatorName, the ListIssueDateTime, and the NextUpdate elements.",
+              "page": 16,
+              "line": 912
+            }
+          }
+        },
+        {
+          "name": "ListIssueDateTime",
+          "min": 0,
+          "max": 0,
+          "value": "utc-datetime",
+          "note": "Direct placement: only in a list without ListAndSchemeInformation (implicit scheme information, 6.3.0).",
+          "source": {
+            "id": "6.3.14/ListIssueDateTime",
+            "clause": "6.3.14",
+            "text_names": [
+              "ListIssueDateTime"
+            ],
+            "citations": [
+              {
+                "quote": "The ListIssueDateTime component shall contain a date-time value (see clause 6.1.3).",
+                "line": 1419,
+                "page": 23
+              }
+            ]
+          },
+          "scheme": {
+            "id": "EXP-ListIssueDateTime-prohibited",
+            "row": "6.3.0 List information placed directly in the list",
+            "citation": {
+              "quote": "In case the LoTE does not contain this component, information about the list itself shall be provided within the list directly through the presence of the LoTEVersionIdentifier, the LoTESequenceNumber, the SchemeOperatorName, the ListIssueDateTime, and the NextUpdate elements.",
+              "page": 16,
+              "line": 912
+            }
+          }
+        },
+        {
+          "name": "NextUpdate",
+          "min": 0,
+          "max": 0,
+          "value": "utc-datetime",
+          "json": {
+            "nullable": true,
+            "from": "text",
+            "note": "Forge JSON allows only a date-time",
+            "citation": {
+              "quote": "available by the scheme operator or be null to indicate a closed LoTE.",
+              "page": 23,
+              "line": 1430
+            }
+          },
+          "xml": {
+            "form": "element with optional dateTime child (empty = closed)",
+            "from": "forge-xsd",
+            "forge": "name=\"dateTime\" type=\"xsd:dateTime\" minOccurs=\"0\""
+          },
+          "note": "May be null: a closed LoTE. Direct placement: only in a list without ListAndSchemeInformation (implicit scheme information, 6.3.0).",
+          "source": {
+            "id": "6.3.15/NextUpdate",
+            "clause": "6.3.15",
+            "text_names": [
+              "NextUpdate"
+            ],
+            "citations": [
+              {
+                "quote": "or be null to indicate a closed LoTE",
+                "line": 1430,
+                "page": 23
+              }
+            ]
+          },
+          "scheme": {
+            "id": "EXP-NextUpdate-prohibited",
+            "row": "6.3.0 List information placed directly in the list",
+            "citation": {
+              "quote": "In case the LoTE does not contain this component, information about the list itself shall be provided within the list directly through the presence of the LoTEVersionIdentifier, the LoTESequenceNumber, the SchemeOperatorName, the ListIssueDateTime, and the NextUpdate elements.",
+              "page": 16,
+              "line": 912
+            }
+          }
+        },
+        {
           "name": "TrustedEntitiesList",
           "min": 0,
           "max": 1,

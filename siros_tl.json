@@ -1,0 +1,70 @@
+{
+  "LoTE": {
+    "ListAndSchemeInformation": {
+      "LoTEVersionIdentifier": 1,
+      "LoTESequenceNumber": 1,
+      "LoTEType": "http://uri.etsi.org/19602/LoTEType/EUPubEAAProvidersList",
+      "SchemeOperatorName": [
+        {
+          "lang": "en",
+          "value": "WP4Trust Registry"
+        }
+      ],
+      "SchemeName": [
+        {
+          "lang": "en",
+          "value": "EU Trusted Entities List"
+        }
+      ],
+      "SchemeTerritory": "EU",
+      "ListIssueDateTime": "2026-10-14T16:34:00Z",
+      "NextUpdate": "2027-04-12T16:34:00Z",
+      "DistributionPoints": [
+        "http://localhost/lote/pubeaa_providers/pubeaa_providers.json"
+      ]
+    },
+    "TrustedEntitiesList": [
+      {
+        "TrustedEntityInformation": {
+          "TEName": [
+            {
+              "lang": "en",
+              "value": "Test EAA Provide"
+            }
+          ],
+          "TEAddress": {
+            "TEPostalAddress": [],
+            "TEElectronicAddress": []
+          },
+          "TEInformationURI": [
+            {
+              "lang": "en",
+              "uriValue": "https://eaa.test.example/support"
+            }
+          ]
+        },
+        "TrustedEntityServices": [
+          {
+            "ServiceInformation": {
+              "ServiceName": [
+                {
+                  "lang": "en",
+                  "value": "Test EAA Provide"
+                }
+              ],
+              "ServiceDigitalIdentity": {
+                "X509Certificates": [
+                  {
+                    "val": "MIIFUDCCAzigAwIBAgIUI5S8cIxOqKcWgyiMbh3nvhSFaXkwDQYJKoZIhvcNAQENBQAwLjEPMA0GA1UEAwwGVkNDQSAxMQ4wDAYDVQQKDAVTVU5FVDELMAkGA1UEBhMCU0UwHhcNMjYwNjMwMDgzNzAwWhcNMzYwNjI3MDgzNzAwWjAuMQ8wDQYDVQQDDAZWQ0NBIDExDjAMBgNVBAoMBVNVTkVUMQswCQYDVQQGEwJTRTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAJVabXmB6abV5HfFhUyWpJ49hxjY4B2foeIFxENBu556tQnTtp/cG6+kUHOK2/H03TkHCSIUxq43dwtYojYY0v4BrJ7KPI5ar7Fu1fHQvk3owbAa9e8hxezSttDj9ptnnprL8lQZXHKIGMLbCcpFjTnmlOEs2NbImqvAYiQHcQzyJQnDyIwk9i2K8EVo/gg8d6V1cjyfjpgsL8zTwqaOt/W4Nyr2nZdK22S+23PtLEkMvFrrznW4jpRNvBBNvZ2xhRqJHFwoPNkDABRrbgVrGpsdQoyI7uxlxrE9wDLhNMfafgIMM4+dTAjtuUApRsLn81cxwPjkZb/isa5q/RdpGbcNa7avu60i51UZMs1DOZuNV2HRdFyItFBZBVNFTWuScEv1l6Wrv45fNUW/XhjEnv/p3/ngAF9r0VligzncFgeD2238sWXbqs1ggTzLK8HSNRhKMKtaivVypeZzMs5FcGydERyUoMkHg0LntboIyYoL00tJL4CrlNaNk8t4V9MkJnCEtsLc8Vf5UcwT6p1TcZcxtv+Tvh/LH15NcLwov9iu1TEN4/xgkuBvgPsv1sQJI3fI0TGwdbaf2jrcavcP27TFNj9EeWPyvcWwhXrHWHrZ2d4h3XerkMjEusJfeWPu4qSwesTsrmZiHrLoo6G7DIXuHKPKVC3+Qsz4aZjalyzlAgMBAAGjZjBkMA4GA1UdDwEB/wQEAwIBBjASBgNVHRMBAf8ECDAGAQH/AgEAMB0GA1UdDgQWBBR16zpCHMiasEeE/eyTgrD7xz8dUzAfBgNVHSMEGDAWgBR16zpCHMiasEeE/eyTgrD7xz8dUzANBgkqhkiG9w0BAQ0FAAOCAgEAD6jBAhdIiLicDEBHATEOwwMXtnXcJ6R2hD8Kv+wfH8IZTF3YlLHvxnBoklbgOZh2t6xRe8MT4sV4Ukdiqy4mFN5yVl6MN1W91bEyKRvURzgTNZ2TvWfcjQmgWiupua9U01MytQffj7dzOEKSjOPs2tjVsUtKMp3GFPM298sTjcwYhANel9DdkJ2otjhL1kydwSMuOVLmS6vj48naF91BgACXuc+Q/1jVFAX1qV52RpLWlvei2xg6BZ28Qyspzq1CFu0Ev6Js6BB9/VBd/v957m54exbtIHTvHA30FDYvloaL2dZlrkQwpk6JvyKOxU62jXA1zc0roIU0HpcHOko0wQwF5dCSgw7m5DOWsN9+3HoDS6JRGoV0jvghuwV8pM/qWWyeBtpsNRKX4kCitYSCDeFfl8rEmqsSf34PQOxGM32nB+b3/tVE/DNi3yZ9g04CPmlJOcg/U890D9SFcPVwh6AYufNSBC29JG85Opt2C0gxA+i0VsaYDYe6LoqEx9z5FF3LgmDbSNGi5Vs1ta8ACnqqYMv0ZOsNyneuwD5b5Y7Zw80EDX96vlGWtOgUK//OD5qas7oLnQ9S6xMuQs83bvQvUuGMe9QRd7trRlvUqBUwwWPsHDF2gWm6jcW+7JH//XX4oKvDdjdwsOmOOMn0AcB0C1Zq28teeILwGutrjOY="
+                  }
+                ]
+              },
+              "ServiceTypeIdentifier": "http://uri.etsi.org/19602/SvcType/PubEAAProvider",
+              "ServiceStatus": "http://uri.etsi.org/19602/PubEAAProvidersList/SvcStatus/notified"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

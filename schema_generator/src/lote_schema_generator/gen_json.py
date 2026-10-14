@@ -20,6 +20,7 @@ JSON binding conventions:
 """
 import argparse, json, os
 
+from .build_schemes import allowed
 from .paths import CORE_GEN, MODEL, ROOT, SNAPSHOT, TRACK_GEN
 
 OUT = CORE_GEN + "lote_core.schema.json"
@@ -281,7 +282,7 @@ def main():
     ap.add_argument("--out", help="output file (default: per --scheme)")
     a = ap.parse_args()
     model_path, a.out = SCHEMES[a.scheme][0], a.out or SCHEMES[a.scheme][1]
-    model = json.load(open(model_path, encoding="utf-8"))
+    model = allowed(json.load(open(model_path, encoding="utf-8")))
     schema = Gen(model, a.names, os.path.relpath(model_path, ROOT)).build()
     os.makedirs(os.path.dirname(a.out), exist_ok=True)
     with open(a.out, "w", encoding="utf-8") as f:

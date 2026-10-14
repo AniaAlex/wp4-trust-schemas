@@ -43,6 +43,6 @@ def test_build_reproduces_committed_outputs(rebuilt, out):
 def test_publish(tmp_path):
     assert pipeline.publish(tmp_path / "schemas", quiet=True) == 0
     got = tree(tmp_path / "schemas")
-    for f in ["__init__.py", "model/lote_model.json", "explicit/generated/lote_core.xsd", "implicit/generated/lote_core.sch",
-              "explicit/generated/profiles", "explicit/model/lote_model_explicit.json"]:
+    for f in ["__init__.py", "model/lote_model.json", "explicit/lote_core.xsd", "implicit/lote_core.sch", "explicit/profiles",
+              "model/explicit/lote_model_explicit.json", "model/explicit/profiles", "model/implicit/lote_model_implicit.json"]:
         assert any(str(p).startswith(f) for p in got), f

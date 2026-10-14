@@ -1172,6 +1172,128 @@
           }
         },
         {
+          "name": "SchemeName",
+          "min": 0,
+          "max": 0,
+          "value": "scheme-name",
+          "source": {
+            "id": "6.3.6/SchemeName",
+            "clause": "6.3.6",
+            "text_names": [
+              "SchemeName"
+            ],
+            "citations": [
+              {
+                "quote": "The SchemeName component specifies the name under which the scheme operates.",
+                "line": 1187,
+                "page": 20
+              },
+              {
+                "quote": "'CC' is the code used in the 'Scheme territory' element (clause 6.3.10)",
+                "ambiguous": true,
+                "line": 1199,
+                "page": 20
+              }
+            ]
+          },
+          "scheme": {
+            "id": "IMP-SchemeName-prohibited",
+            "row": "Table 1 SchemeName",
+            "citation": {
+              "quote": "SchemeName / M",
+              "page": 17,
+              "line": 997
+            }
+          }
+        },
+        {
+          "name": "SchemeInformationURI",
+          "min": 0,
+          "max": 0,
+          "value": "multilang-uris",
+          "source": {
+            "id": "6.3.7/SchemeInformationURI",
+            "clause": "6.3.7",
+            "text_names": [
+              "SchemeInformationURI"
+            ],
+            "citations": [
+              {
+                "quote": "This component shall be a sequence of multilingual pointers (see clause 6.1.4).",
+                "line": 1231,
+                "page": 20
+              }
+            ]
+          },
+          "scheme": {
+            "id": "IMP-SchemeInformationURI-prohibited",
+            "row": "Table 1 SchemeInformationURI",
+            "citation": {
+              "quote": "SchemeInformationURI / M",
+              "page": 17,
+              "line": 998
+            }
+          }
+        },
+        {
+          "name": "StatusDeterminationApproach",
+          "min": 0,
+          "max": 0,
+          "value": "uri",
+          "source": {
+            "id": "6.3.8/StatusDeterminationApproach",
+            "clause": "6.3.8",
+            "text_names": [
+              "StatusDeterminationApproach"
+            ],
+            "citations": [
+              {
+                "quote": "The StatusDeterminationApproach component shall contain an indicator expressed as a URI.",
+                "line": 1275,
+                "page": 21
+              }
+            ]
+          },
+          "scheme": {
+            "id": "IMP-StatusDeterminationApproach-prohibited",
+            "row": "Table 1 StatusDeterminationApproach",
+            "citation": {
+              "quote": "StatusDeterminationApproach / M",
+              "page": 17,
+              "line": 999
+            }
+          }
+        },
+        {
+          "name": "SchemeTypeCommunityRules",
+          "min": 0,
+          "max": 0,
+          "value": "multilang-uris",
+          "source": {
+            "id": "6.3.9/SchemeTypeCommunityRules",
+            "clause": "6.3.9",
+            "text_names": [
+              "SchemeTypeCommunityRules"
+            ],
+            "citations": [
+              {
+                "quote": "The SchemeTypeCommunityRules component shall contain a sequence of multilingual pointers (see clause 6.1.4).",
+                "line": 1287,
+                "page": 21
+              }
+            ]
+          },
+          "scheme": {
+            "id": "IMP-SchemeTypeCommunityRules-prohibited",
+            "row": "Table 1 SchemeTypeCommunityRules",
+            "citation": {
+              "quote": "SchemeTypeCommunityRules / M",
+              "page": 17,
+              "line": 1000
+            }
+          }
+        },
+        {
           "name": "SchemeTerritory",
           "min": 0,
           "max": 1,
@@ -1189,6 +1311,35 @@
                 "page": 22
               }
             ]
+          }
+        },
+        {
+          "name": "PolicyOrLegalNotice",
+          "min": 0,
+          "max": 0,
+          "structure": "PolicyOrLegalNotice",
+          "source": {
+            "id": "6.3.11/PolicyOrLegalNotice",
+            "clause": "6.3.11",
+            "text_names": [
+              "PolicyOrLegalNotice"
+            ],
+            "citations": [
+              {
+                "quote": "a sequence of LoTEPolicy elements which shall be multilingual pointers",
+                "line": 1344,
+                "page": 22
+              }
+            ]
+          },
+          "scheme": {
+            "id": "IMP-PolicyOrLegalNotice-prohibited",
+            "row": "Table 1 PolicyOrLegalNotice",
+            "citation": {
+              "quote": "PolicyOrLegalNotice / M",
+              "page": 17,
+              "line": 1002
+            }
           }
         },
         {

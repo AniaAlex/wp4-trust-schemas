@@ -18,6 +18,7 @@ The model says WHAT the text requires; this script holds HOW the XML binding exp
 import json, os
 from xml.sax.saxutils import escape
 
+from .build_schemes import allowed
 from .paths import CORE_GEN, MODEL, ROOT, SNAPSHOT, TRACK_GEN
 
 OUT = CORE_GEN
@@ -329,7 +330,7 @@ def main():
     ap.add_argument("--scheme", choices=list(SCHEMES), default="core",
                     help="core: both kinds of list (Table 1 in Schematron); explicit / implicit: one track (Table 1 column as structure)")
     model_path, out = SCHEMES[ap.parse_args().scheme]
-    model = json.load(open(model_path, encoding="utf-8"))
+    model = allowed(json.load(open(model_path, encoding="utf-8")))
     g = Gen(model)
     os.makedirs(out, exist_ok=True)
     files = {"lote_core.xsd": g.core(), "lote_tie.xsd": g.extension("OtherAssociatedBodies"),
