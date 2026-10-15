@@ -11,6 +11,8 @@ The model in [model/](model/) is **the source of this track and is edited by han
 | [model/lote_model_explicit.json](model/lote_model_explicit.json) | The full model of this track (a snapshot): the core model with [base/model/schemes/explicit.json](../base/model/schemes/explicit.json) applied, now edited directly | by hand |
 | [generated/base/](generated/base/) | `lote_core.schema.json` (JSON), `lote_core.xsd` + `lote_tie.xsd` + `lote_sie.xsd` (XML), `lote_core.sch` (Schematron) | [gen_json.py](../src/lote_schema_generator/gen_json.py), [gen_xsd.py](../src/lote_schema_generator/gen_xsd.py) `--scheme explicit` |
 | [explicit_schema.md](explicit_schema.md) | The structure of an explicit list, drawn as a tree | by hand |
+| [terminology.md](terminology.md) | Content modes (`sequence`, `choice`, `any-of`) with examples and their XSD / JSON form; the fields a profile element uses to narrow the model | by hand |
+| [known_gaps.md](known_gaps.md) | Open issues in the explicit track, with risk and proposed fix | by hand |
 | [model/profiles/](model/profiles/) | The annex D–I overlays (FHIR-style differentials on this track) | by hand |
 | [generated/profiles/](generated/profiles/) | The six EU profiles D–I, JSON and Schematron, built on this track | [gen_profiles_from_model.py](../src/lote_schema_generator/gen_profiles_from_model.py) |
 

@@ -111,7 +111,7 @@ Clause 6.3.0 and Table 1 distinguish lists that describe their scheme (**explici
 
 ## Profiles (Annexes D–I)
 
-Each profile is an **overlay** on the explicit track (every annex requires a scheme explicit list, D.1–I.1): it lists only what its annex changes, one element per table row. Its `baseDefinition` is [schemes/explicit.json](schemes/explicit.json), and `baseCitation` quotes the annex sentence that requires it. Written by hand.
+Each profile is an **overlay** on the explicit track (every annex requires a scheme explicit list, D.1–I.1): it lists only what its annex changes, one element per table row. Its `baseDefinition` is the explicit model, [explicit/model/lote_model_explicit.json](../../explicit/model/lote_model_explicit.json), and `baseCitation` quotes the annex sentence that requires it. Written by hand.
 
 | File | Content |
 |---|---|
@@ -120,12 +120,12 @@ Each profile is an **overlay** on the explicit track (every annex requires a sch
 
 ### Semantics
 
-The overlays follow FHIR profiling: a profile has `derivation: "constraint"`, a `baseDefinition` (the core model) and a `differential` of elements, each addressing a core-model `path`. An element may only **narrow** the base, exactly as clause 4.7 requires ("LoTE profile cannot however make the presence of a mandatory component optional or conditioned"). The files use FHIR's field names and rules; they are not FHIR resources.
+The overlays follow FHIR profiling: a profile has `derivation: "constraint"`, a `baseDefinition` (the explicit model) and a `differential` of elements, each addressing a `path` in that model. An element may only **narrow** the base, exactly as clause 4.7 requires ("LoTE profile cannot however make the presence of a mandatory component optional or conditioned"). The files use FHIR's field names and rules; they are not FHIR resources.
 
 | Element field | Meaning | FHIR | ISO 20022 usage guideline | Rule id in the generated schemas |
 |---|---|---|---|---|
 | `min: 1` | must be present (optional in the core) | `ElementDefinition.min` | restriction of multiplicity | `<annex>-<component>-required` |
-| `max: "0"` | must not be present | `ElementDefinition.max = "0"` | element removed (multiplicity 0) | `<annex>-<component>-prohibited` |
+| `max: 0` | must not be present | `ElementDefinition.max = "0"` | element removed (multiplicity 0) | `<annex>-<component>-prohibited` |
 | `fixedUri` / `fixedInteger` / `fixedString` | must have exactly this value | `fixed[x]` | fixed value | `<annex>-<component>-fixed` |
 | `binding` (`strength: "required"`, `valueSet`) | must be one of these values | `binding` to a ValueSet | restriction of a code set | `<annex>-<component>-values` |
 | `constraint` with an `expression` | a checkable condition, in FHIRPath, evaluated from the element at `path` | invariant (`key`, `severity`, `human`, `expression`) | usage rule | the constraint `key` |
@@ -143,11 +143,11 @@ The overlays take FHIR's profiling fields where FHIR has one, and add their own 
 |---|---|---|
 | `id`, `title` | profile | as in FHIR |
 | `derivation` | profile | always `"constraint"` |
-| `baseDefinition` | profile | a file path (`base/model/schemes/explicit.json`: a profile on a profile, as FHIR allows), not a canonical URL |
+| `baseDefinition` | profile | a file path (`explicit/model/lote_model_explicit.json`, the explicit track, itself a narrowing of the base model), not a canonical URL |
 | `differential.element` | profile | as in FHIR |
 | `id` | element | FHIR `ElementDefinition.id`, but not path-based: the id of the element's first rule (`D-LoTEType-fixed`, or the constraint key such as `D-te-tel`); unique per annex. The generated schemas report failures under these ids |
 | `path` | element | a path in the LoTE model (`LoTE.ListAndSchemeInformation.LoTEType`), not in a FHIR resource |
-| `min`, `max` | element | `max: "0"` = prohibited, as in FHIR; `min` is a number |
+| `min`, `max` | element | `max: 0` = prohibited, as FHIR's `max = "0"`; both are numbers here (FHIR writes `max` as a string) |
 | `fixedUri`, `fixedInteger`, `fixedString` | element | FHIR `fixed[x]` |
 | `binding.strength`, `binding.valueSet` | element | `strength` is always `"required"`; `valueSet` is an inline list of codes, not a ValueSet URL |
 | `constraint.key`, `.severity`, `.human`, `.expression` | element | FHIR invariant; `severity` is always `"error"` (every rule is a "shall"); `expression` is FHIRPath over the LoTE model, `null` when no schema can check it |

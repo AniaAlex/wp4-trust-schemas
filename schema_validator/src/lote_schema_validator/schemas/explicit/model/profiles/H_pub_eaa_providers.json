@@ -2,7 +2,7 @@
   "id": "lote-profile-H",
   "title": "ETSI TS 119 602 V1.1.1 Annex H - Pub-EAA providers list",
   "derivation": "constraint",
-  "baseDefinition": "base/model/schemes/explicit.json",
+  "baseDefinition": "explicit/model/lote_model_explicit.json",
   "baseCitation": {
     "quote": "shall comply with either the scheme explicit XML schema definition",
     "page": 62,
@@ -146,7 +146,7 @@
         "id": "H-PointersToOtherLoTE-prohibited",
         "row": "Table H.1 Pointers to other LoTEs",
         "path": "LoTE.ListAndSchemeInformation.PointersToOtherLoTE",
-        "max": "0",
+        "max": 0,
         "citation": {
           "quote": "The PointersToOtherLoTE component shall not be present.",
           "page": 63,
@@ -534,7 +534,7 @@
         "id": "H-X509Certificate-prohibited",
         "row": "Table H.3 History information (no certificate)",
         "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityServices.TrustedEntityService.ServiceHistory.ServiceHistoryInstance.ServiceDigitalIdentity.X509Certificate",
-        "max": "0",
+        "max": 0,
         "citation": {
           "quote": "shall not contain an X509Certificate component.",
           "page": 65,
@@ -546,7 +546,7 @@
         "row": "H.4 Signature",
         "path": "LoTE.Signature",
         "json": {
-          "max": "0",
+          "max": 0,
           "from": "text",
           "note": "In JSON the list is signed by encapsulation: a compact JAdES Baseline B signature (ETSI TS 119 182-1) whose payload is the list; the published file is the compact JWS (header.payload.signature). The Signature component is not used in JSON (6.8.0). WP4 currently signs JSON lists with a detached JWS in JSON serialization next to LoTE ({\"LoTE\": ..., \"signature\": {protected, signature}}): neither compact nor encapsulating, to be reported once a signature validator exists.",
           "citation": {

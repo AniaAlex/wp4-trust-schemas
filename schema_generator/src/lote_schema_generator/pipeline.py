@@ -13,7 +13,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from .paths import MODEL, PROFILES_DIR, PROFILES_GEN, ROOT, SNAPSHOT, TRACK_GEN, VALIDATOR_SCHEMAS
+from .paths import EXPLICIT, ROOT, VALIDATOR_SCHEMAS
 
 STEPS = [
     ("gen_json", ["--scheme", "base"]), ("gen_xsd", ["--scheme", "base"]),
@@ -38,24 +38,14 @@ def build(quiet=False):
 
 
 def publish(target=VALIDATOR_SCHEMAS, quiet=False):
-    """Copy what the validator needs into its package data. The target is replaced, so it holds no stale files.
-
-        explicit/base/           the explicit track's schemas; explicit/profiles/ the profile schemas (D-I)
-        implicit/                the implicit track's schemas
-        model/lote_model.json    the core model both tracks derive from
-        model/<track>/           the track's snapshot; model/explicit/profiles/ the annex overlays
-    """
+    """Copy the explicit track into the validator's package data, in the same layout as in this project: explicit/model/
+    (the model and the D-I overlays) and explicit/generated/ (base/ the track's schemas, profiles/ the profile schemas).
+    The track's documentation (*.md) stays in the generator. The base model and the implicit track are frozen and not
+    published (docs/project_decisions_vs_etsi.md #4). The target is replaced, so it holds no stale files."""
     target = Path(target)
     if target.exists():
         shutil.rmtree(target)
-    shutil.copytree(TRACK_GEN["explicit"], target / "explicit" / "base")
-    shutil.copytree(PROFILES_GEN, target / "explicit" / "profiles")
-    shutil.copytree(TRACK_GEN["implicit"], target / "implicit")
-    for track in ("explicit", "implicit"):
-        (target / "model" / track).mkdir(parents=True)
-        shutil.copy2(SNAPSHOT[track], target / "model" / track)
-    shutil.copytree(PROFILES_DIR, target / "model" / "explicit" / "profiles")
-    shutil.copy2(MODEL, target / "model" / "lote_model.json")
+    shutil.copytree(EXPLICIT, target / "explicit", ignore=shutil.ignore_patterns("*.md"))
     (target / "__init__.py").write_text('"""Generated schemas, published by `lote-schemas publish`. Do not edit."""\n')
     if not quiet:
         n = sum(1 for p in target.rglob("*") if p.is_file())

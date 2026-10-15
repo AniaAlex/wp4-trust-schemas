@@ -12,6 +12,15 @@ from lote_schema_validator.validate import SCHEMAS, main
 DATA = Path(__file__).parent / "data"
 GENERATOR = Path(__file__).resolve().parents[2] / "schema_generator"
 
+# Every list is validated as a scheme explicit list (the implicit track is frozen and not published). The implicit-shaped
+# samples fail with the Table 1 rules: the five list elements may not sit directly in the list, and an explicit list
+# needs ListAndSchemeInformation and the scheme information.
+DIRECT = {"EXP-LoTEVersionIdentifier-prohibited", "EXP-LoTESequenceNumber-prohibited", "EXP-SchemeOperatorName-prohibited",
+          "EXP-ListIssueDateTime-prohibited", "EXP-NextUpdate-prohibited"}
+SCHEME_INFO = {"EXP-LoTEType-required", "EXP-SchemeOperatorAddress-required", "EXP-SchemeInformationURI-required",
+               "EXP-StatusDeterminationApproach-required", "EXP-SchemeTypeCommunityRules-required",
+               "EXP-SchemeTerritory-required", "EXP-PolicyOrLegalNotice-required"}
+
 # (file, profile, track, expected track, the rules that fail: empty when the list is valid)
 CASES = [
     ("D_pid_providers.json", "D", None, "explicit", set()),
@@ -19,11 +28,11 @@ CASES = [
     ("H_pub_eaa_providers.xml", "H", None, "explicit", set()),
     ("explicit_list.json", None, None, "explicit", set()),
     ("explicit_list.xml", None, None, "explicit", set()),
-    ("implicit_list_direct.json", None, None, "implicit", set()),        # 6.3.0: no ListAndSchemeInformation
-    ("implicit_list_direct.xml", None, None, "implicit", set()),
+    ("implicit_list_direct.json", None, None, "explicit", DIRECT | {"EXP-ListAndSchemeInformation-required"}),
+    ("implicit_list_direct.xml", None, None, "explicit", DIRECT),       # XSD stops at the first unexpected element
     ("D_with_json_signature.json", "D", None, "explicit", {"LoTE-Signature-not-in-json", "D-Signature-json-prohibited"}),
     ("H_without_signature.xml", "H", None, "explicit", {"H-Signature-xml-required"}),                      # H.4
-    ("implicit_list_with_scheme_name.json", None, "implicit", "implicit", {"IMP-SchemeName-prohibited"}),  # Table 1 '/'
+    ("implicit_list_with_scheme_name.json", None, "explicit", "explicit", SCHEME_INFO),                    # Table 1
 ]
 
 
@@ -37,9 +46,9 @@ def test_validate(name, profile, track, want_track, want_rules):
 
 
 @pytest.mark.parametrize("name,profile", [("D_with_json_signature.json", "D"), ("H_without_signature.xml", "H"),
-                                          ("implicit_list_with_scheme_name.json", None)])
+                                          ("implicit_list_with_scheme_name.json", None), ("implicit_list_direct.json", None)])
 def test_every_failure_cites_the_text(name, profile):
-    r = validate(DATA / name, profile=profile, track=None if profile else "implicit")
+    r = validate(DATA / name, profile=profile)
     for f in r.findings:
         assert f.source.get("ref") and f.source.get("page") and f.source.get("quote"), f
 
@@ -145,9 +154,12 @@ def test_json_schema_errors_carry_model_ids(tmp_path, what, change, rules, ref):
     assert all(f.source["ref"] == ref and f.source["quote"] for f in findings), findings
 
 
-def test_profile_cannot_be_implicit():
+def test_only_the_explicit_track():
     with pytest.raises(ValueError):
-        validate(DATA / "D_pid_providers.json", profile="D", track="implicit")
+        validate(DATA / "explicit_list.json", track="implicit")
+    with pytest.raises(SystemExit):                                     # --implicit is no longer an option
+        main([str(DATA / "explicit_list.json"), "--implicit"])
+    assert main([str(DATA / "explicit_list.json"), "--explicit"]) == 0
 
 
 def test_cli(capsys):
@@ -159,16 +171,10 @@ def test_cli(capsys):
 
 
 @pytest.mark.skipif(not GENERATOR.is_dir(), reason="the generator project is not next to this one")
-@pytest.mark.parametrize("published,source", [
-    ("explicit/base", "explicit/generated/base"), ("explicit/profiles", "explicit/generated/profiles"),
-    ("implicit", "implicit/generated"),
-    ("model/lote_model.json", "base/model/lote_model.json"),
-    ("model/explicit/lote_model_explicit.json", "explicit/model/lote_model_explicit.json"),
-    ("model/implicit/lote_model_implicit.json", "implicit/model/lote_model_implicit.json"),
-    ("model/explicit/profiles", "explicit/model/profiles"),
-])
+@pytest.mark.parametrize("published,source", [("explicit", "explicit")])
 def test_published_schemas_are_current(published, source):
-    """The package data is the generator's latest output: run `lote-schemas publish` if this fails."""
+    """The package data is the generator's latest output: run `lote-schemas publish` if this fails. The generator's
+    documentation (*.md) is not published."""
     left, right = Path(SCHEMAS) / published, GENERATOR / source
     if right.is_file():
         assert left.is_file() and filecmp.cmp(left, right, shallow=False), f"{published} differs from the generator's {source}"
@@ -176,7 +182,7 @@ def test_published_schemas_are_current(published, source):
     stale = []
 
     def walk(c, rel=""):
-        stale.extend(rel + n for n in c.left_only + c.right_only + c.diff_files)
+        stale.extend(rel + n for n in c.left_only + c.right_only + c.diff_files if not n.endswith(".md"))
         for n, s in c.subdirs.items():
             walk(s, rel + n + "/")
     walk(filecmp.dircmp(left, right))

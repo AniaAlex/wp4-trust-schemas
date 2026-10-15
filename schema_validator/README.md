@@ -8,9 +8,7 @@ Validates lists of trusted entities (ETSI TS 119 602 V1.1.1, LoTE), in XML or JS
 pip install -e ".[dev]"
 
 lote-validate list.json --profile D       # explicit track + Annex D (PID providers)
-lote-validate list.xml --explicit         # explicit track (Table 1, explicit column)
-lote-validate list.json --implicit        # implicit track (Table 1, implicit column)
-lote-validate list.json                   # track inferred from the content
+lote-validate list.xml                    # explicit track (Table 1, explicit column); --explicit says the same
 lote-validate list.xml --profile H --json # machine-readable: {"track", "track_reason", "profile", "findings"}
 ```
 
@@ -24,6 +22,8 @@ for f in report.findings:
 ```
 
 Exit code of `lote-validate`: `0` valid, `1` failures, `2` usage error.
+
+Every list is validated as a **scheme explicit** list: WP4 lists are explicit, and the implicit track is frozen and not published ([project_decisions_vs_etsi.md](../docs/project_decisions_vs_etsi.md) #3, #4). A list without the scheme information fails with the Table 1 rules (`EXP-SchemeName-required`, …); it is never accepted as an implicit list.
 
 ## Example finding
 
@@ -62,17 +62,18 @@ XSD validation starts at the root, and the profile Schematron rules name their e
 
 ## Schemas
 
-[src/lote_schema_validator/schemas/](src/lote_schema_validator/schemas/) is package data: a copy of the generator's output. It is laid out as follows:
+[src/lote_schema_validator/schemas/](src/lote_schema_validator/schemas/) is package data: a copy of the generator's output. It is the generator's `explicit/` directory, in the same layout, without its documentation:
 
 ```
 schemas/
-  explicit/            the explicit track's schemas; profiles/ the Annex D–I profile schemas
-  implicit/            the implicit track's schemas
-  model/               the model files the citations come from (never used to decide validity)
-    lote_model.json    the core model both tracks derive from
-    explicit/          the track's model (lote_model_explicit.json); profiles/ the Annex D–I overlays
-    implicit/          the track's model (lote_model_implicit.json)
+  explicit/
+    generated/base/      the explicit track's schemas (JSON Schema, XSD, Schematron)
+    generated/profiles/  the Annex D–I profile schemas
+    model/               the files the citations come from (never used to decide validity):
+                         lote_model_explicit.json and profiles/ (the Annex D–I overlays)
 ```
+
+The track's documentation (structure, terminology, known gaps) is in the generator: [../schema_generator/explicit/](../schema_generator/explicit/).
 
 It is written by `lote-schemas publish` in the generator project; do not edit it. Set `LOTE_SCHEMAS_DIR` to validate against another copy.
 
@@ -82,10 +83,14 @@ It is written by `lote-schemas publish` in the generator project; do not edit it
 pytest
 ```
 
-[tests/data/](tests/data/) holds sample lists (valid D and H lists, explicit and implicit lists, and lists that break 6.8.0, H.4 and Table 1), written from the generator's test builders. `test_published_schemas_are_current` compares the package data with the generator's output when the generator project sits next to this one.
+[tests/data/](tests/data/) holds sample lists (valid D and H lists, an explicit list, implicit-shaped lists that fail the explicit track's Table 1 rules, and lists that break 6.8.0 and H.4), written from the generator's test builders. `test_published_schemas_are_current` compares the package data with the generator's output when the generator project sits next to this one.
 
 ## Limitations
 
+The full list, with reasons and fixes, is in [known_gaps.md](known_gaps.md).
+
+- **Only the explicit track.** Implicit lists are not supported: every list is validated as explicit, so an implicit list fails with the Table 1 rules. The base model (both kinds of list) is not used.
+- **Unrecognized critical extensions are not rejected** (clause 6.3.17).
 - **There is no signature validator.** Whether a signature is valid (the envelope, the JAdES / XAdES header, the signing certificate, the cryptographic signature) is not checked. The schemas check only where a signature may or must sit: no `Signature` component in a JSON list (6.8.0), `ds:Signature` optional in XML, required in an Annex H list in XML (H.4).
 - **Network on first XML run:** the XSD imports `xml.xsd` and the W3C XML-DSig schema from w3.org.
 - Rules-layer requirements no program can check (listed in each profile) are not checked.

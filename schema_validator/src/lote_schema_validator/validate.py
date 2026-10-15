@@ -2,29 +2,26 @@
 sentence of ETSI TS 119 602 it breaks: rule id, location in the list, clause or annex row, page, line and quote.
 
     lote-validate list.xml --profile D       # explicit track + Annex D (PID providers)
-    lote-validate list.json --explicit       # explicit track (Table 1, explicit column)
-    lote-validate list.json --implicit       # implicit track (Table 1, implicit column)
-    lote-validate list.json                  # track inferred from the content
+    lote-validate list.json                  # explicit track (Table 1, explicit column); --explicit says the same
     lote-validate list.xml --profile D --json > report.json
 
     from lote_schema_validator import validate
     report = validate("list.json", profile="D")          # report.valid, report.track, report.findings
 
-Schemas: the package data in schemas/ (published by the generator: `lote-schemas publish`), or LOTE_SCHEMAS_DIR.
-Tracks (clause 6.3.0, Table 1): schemas/explicit/base/ or schemas/implicit/. Without --explicit or --implicit the track is
-inferred: a list is explicit as soon as it contains an element Table 1 forbids for implicit lists (SchemeName,
-SchemeInformationURI, StatusDeterminationApproach, SchemeTypeCommunityRules, PolicyOrLegalNotice). --profile implies
---explicit: every annex requires a scheme explicit list (D.1-I.1).
+Schemas: the package data in schemas/explicit/ (the generator's explicit/ directory, published by `lote-schemas publish`),
+or LOTE_SCHEMAS_DIR. Every list is validated as a scheme explicit list (clause 6.3.0, Table 1, explicit column): WP4
+lists are explicit, and the implicit track is frozen and not published (docs/project_decisions_vs_etsi.md #3, #4). A
+list without the scheme information therefore fails with the Table 1 rules (EXP-SchemeName-required, ...).
 
 Layers, in order:
-  XML   the track's XSD (lote_core.xsd), its Schematron (lote_core.sch), profile Schematron (explicit/profiles/*.sch)
-  JSON  the track's JSON Schema, or the profile's (explicit/profiles/*.json allOf the explicit track), then the profile rules JSON
+  XML   the track's XSD (lote_core.xsd), its Schematron (lote_core.sch), profile Schematron (generated/profiles/*.sch)
+  JSON  the track's JSON Schema, or the profile's (generated/profiles/*.json allOf the explicit track), then the profile rules JSON
         Schema cannot express (x-rules-layer entries with a 'check', e.g. the 6-month NextUpdate rule)
 Rule ids and citations:
-  profile rules     the overlay element of the rule id (schemas/model/explicit/profiles/*.json): D-LoTEType-fixed
+  profile rules     the overlay element of the rule id (schemas/explicit/model/profiles/*.json): D-LoTEType-fixed
   core rules        the model constraint (R-...) or, for the other core Schematron patterns, the model source of their
                     clause; a JSON if/then or either-or of a constraint carries the constraint's key
-  schema errors     the error's location in the list is resolved through the track's snapshot (schemas/model/<track>/)
+  schema errors     the error's location in the list is resolved through the explicit model (schemas/explicit/model/)
                     to a model place: a structure, or a component of one. The rule id is that place plus what is wrong,
                     and the citation is the place's source:
                       <Structure>-<Component>-required | -not-allowed | -occurrence | -value | -items
@@ -41,12 +38,11 @@ from dataclasses import dataclass, asdict, field
 from pathlib import Path
 
 SCHEMAS = os.environ.get("LOTE_SCHEMAS_DIR") or str(Path(__file__).resolve().parent / "schemas")
-TRACKS = {t: {"gen": os.path.join(SCHEMAS, *gen), "model": os.path.join(SCHEMAS, "model", t, f"lote_model_{t}.json")}
-          for t, gen in (("explicit", ("explicit", "base")), ("implicit", ("implicit",)))}
-PROFILES = os.path.join(SCHEMAS, "explicit", "profiles")  # the profile schemas, next to the explicit track's base
-EXPLICIT_MARKERS = ["SchemeName", "SchemeInformationURI", "StatusDeterminationApproach", "SchemeTypeCommunityRules",
-                    "PolicyOrLegalNotice"]                # "/" in Table 1's implicit column
-OVERLAYS = os.path.join(SCHEMAS, "model", "explicit", "profiles")
+EXPLICIT = os.path.join(SCHEMAS, "explicit")             # the generator's explicit/ directory (models and schemas)
+TRACKS = {"explicit": {"gen": os.path.join(EXPLICIT, "generated", "base"),
+                       "model": os.path.join(EXPLICIT, "model", "lote_model_explicit.json")}}
+PROFILES = os.path.join(EXPLICIT, "generated", "profiles")  # the profile schemas
+OVERLAYS = os.path.join(EXPLICIT, "model", "profiles")      # the profile overlays (rule citations)
 SVRL = {"svrl": "http://purl.oclc.org/dsdl/svrl"}
 CORE_SCH_CLAUSE = {"LanguageTagCase": "6.1.4", "CountryCodeExclusions": "6.1.5", "ElectronicAddressContent": "6.3.5.2"}
 
@@ -533,19 +529,6 @@ def validate_json(path, annex, C, gen):
 
 
 # ------------------------------------------------------------------ report
-def infer_track(path, is_xml):
-    """Table 1: a list is explicit as soon as it contains an element forbidden for implicit lists."""
-    if is_xml:
-        from lxml import etree
-        names = {local(el.tag) for el in etree.parse(path).iter() if isinstance(el.tag, str)}
-    else:
-        lote = json.load(open(path, encoding="utf-8")).get("LoTE") or {}
-        names = set(lote) | set(lote.get("ListAndSchemeInformation") or {})
-    found = [n for n in EXPLICIT_MARKERS if n in names]
-    return ("explicit", f"inferred: contains {found[0]}") if found else \
-        ("implicit", "inferred: no element that Table 1 forbids for implicit lists")
-
-
 def text_report(path, annex, findings, track="", why="", root_corrected=False):
     lines = [f"{path}: {track} track ({why}){', profile ' + annex if annex else ''} - "
              + (f"{len(findings)} failure(s)" if findings else "valid")]
@@ -574,8 +557,8 @@ def text_report(path, annex, findings, track="", why="", root_corrected=False):
 class Report:
     """The result of validating one list."""
     path: str
-    track: str                                            # "explicit" or "implicit"
-    track_reason: str                                     # why that track: a flag, a profile, or inferred from the content
+    track: str                                            # always "explicit"
+    track_reason: str                                     # why: the flag, the profile, or the default
     profile: str = None                                   # annex letter, or None
     findings: list = field(default_factory=list)          # [Finding]
     root_corrected: bool = False                          # wrong root: the rest was checked as if the root were right
@@ -590,20 +573,17 @@ class Report:
 
 
 def validate(path, profile=None, track=None):
-    """Validate the list at path. profile: an annex letter D-I (implies the explicit track); track: "explicit",
-    "implicit" or None to infer it from the content (a list is explicit once it contains an element Table 1 forbids
-    for implicit lists)."""
+    """Validate the list at path as a scheme explicit list. profile: an annex letter D-I; track: "explicit" or None (the
+    same: the explicit track is the only one published, see docs/project_decisions_vs_etsi.md #4)."""
     path = str(path)
-    if profile and track == "implicit":
-        raise ValueError("a profile requires a scheme explicit list (D.1-I.1); it cannot be combined with the implicit track")
+    if track not in (None, "explicit"):
+        raise ValueError(f"track {track!r} is not supported: only the explicit track is published (the implicit track is "
+                         "frozen, docs/project_decisions_vs_etsi.md #4)")
     with open(path, "rb") as fh:
         is_xml = fh.read(512).lstrip(b"\xef\xbb\xbf \t\r\n").startswith(b"<")
-    if track == "explicit" or profile:
-        tr, why = "explicit", "--explicit" if track == "explicit" else f"--profile {profile}: D.1-I.1 require a scheme explicit list"
-    elif track == "implicit":
-        tr, why = "implicit", "--implicit"
-    else:
-        tr, why = infer_track(path, is_xml)
+    tr = "explicit"
+    why = (f"--profile {profile}: D.1-I.1 require a scheme explicit list" if profile else
+           "--explicit" if track == "explicit" else "default: only the explicit track is published")
     C = Citations(tr)
     gen = TRACKS[tr]["gen"]
     findings, corrected = validate_xml(path, profile, C, gen) if is_xml else (validate_json(path, profile, C, gen), False)
@@ -613,17 +593,14 @@ def validate(path, profile=None, track=None):
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="lote-validate", description=__doc__.splitlines()[0])
     ap.add_argument("list", help="the LoTE to validate (.xml or .json)")
-    ap.add_argument("--profile", choices=list("DEFGHI"), help="annex profile to apply (implies --explicit)")
-    track = ap.add_mutually_exclusive_group()
-    track.add_argument("--explicit", action="store_true", help="validate as a scheme-explicit list (Table 1, explicit column)")
-    track.add_argument("--implicit", action="store_true", help="validate as a list with implicit scheme information")
+    ap.add_argument("--profile", choices=list("DEFGHI"), help="annex profile to apply")
+    ap.add_argument("--explicit", action="store_true",
+                    help="validate as a scheme-explicit list (Table 1, explicit column); the default and only track")
     ap.add_argument("--json", action="store_true", help="print the findings as JSON")
     a = ap.parse_args(argv)
     if not os.path.isfile(a.list):
         ap.error(f"no such file: {a.list}")
-    if a.profile and a.implicit:
-        ap.error("--profile requires a scheme explicit list (D.1-I.1); it cannot be combined with --implicit")
-    r = validate(a.list, a.profile, "explicit" if a.explicit else "implicit" if a.implicit else None)
+    r = validate(a.list, a.profile, "explicit" if a.explicit else None)
     if a.json:
         print(json.dumps(r.to_dict(), indent=2, ensure_ascii=False))
     else:

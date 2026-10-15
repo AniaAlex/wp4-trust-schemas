@@ -43,6 +43,8 @@ def test_build_reproduces_committed_outputs(rebuilt, out):
 def test_publish(tmp_path):
     assert pipeline.publish(tmp_path / "schemas", quiet=True) == 0
     got = tree(tmp_path / "schemas")
-    for f in ["__init__.py", "model/lote_model.json", "explicit/base/lote_core.xsd", "implicit/lote_core.sch", "explicit/profiles",
-              "model/explicit/lote_model_explicit.json", "model/explicit/profiles", "model/implicit/lote_model_implicit.json"]:
+    for f in ["__init__.py", "explicit/generated/base/lote_core.xsd", "explicit/generated/profiles",
+              "explicit/model/lote_model_explicit.json", "explicit/model/profiles"]:
         assert any(str(p).startswith(f) for p in got), f
+    assert not any(str(p).startswith(("implicit", "model", "base")) for p in got)    # frozen tracks are not published
+    assert not any(p.suffix == ".md" for p in got)                                     # docs stay in the generator

@@ -10,7 +10,7 @@ Outputs: explicit/generated/profiles/lote_profile_<X>_<name>.json  - JSON Schema
 
 Translation of a differential element (path -> binding location):
   min 1                      JSON: name in the parent's 'required'          XML: assert the child exists
-  max "0"                    JSON: 'not': {}                                 XML: assert the child is absent
+  max 0                      JSON: 'not': {}                                 XML: assert the child is absent
   fixed[x] (+ acceptAlso)    JSON: 'const' (or 'enum')                       XML: assert the value
   binding (required)         JSON: 'enum'                                    XML: assert the value is one of the set
   constraint with 'check'    JSON: 'contains' / 'minItems'                   XML: XPath assertion
@@ -188,7 +188,7 @@ class JsonProfile:
                 node.setdefault("allOf", []).append({"contains": {"required": [name]}})
             elif last["kind"] != "field":
                 self.rule(parent, r, what_text(e, "required"), e, {"required": [name]})
-        if e.get("max") == "0":
+        if e.get("max") == 0:
             self.rule(node, rid(e, "prohibited"), what_text(e, "prohibited"), e, {"not": {}})
         for fk in ("fixedUri", "fixedInteger", "fixedString"):
             if fk in e:
@@ -199,7 +199,7 @@ class JsonProfile:
             self.rule(node, rid(e, "values"), what_text(e, "values"), e, {"enum": e["binding"]["valueSet"]})
         jb = e.get("json") or {}                              # rules of the JSON binding only, citing the binding's quote
         eb = {**e, "citation": jb.get("citation") or e.get("citation")}
-        if jb.get("max") == "0":
+        if jb.get("max") == 0:
             self.rule(node, rid(e, "json-prohibited"), f"{name} is not part of the JSON binding", eb, {"not": {}})
         if jb.get("min", 0) >= 1:
             self.rule(parent, rid(e, "json-required"), f"{name} is required in JSON", eb, {"required": [name]})
@@ -252,7 +252,7 @@ class SchProfile:
             rel = self.xpath(steps[-1:])[1:]
         if e.get("min", 0) >= 1 and last["kind"] != "field":
             self.structural(e, "required", ctx, rel)
-        if e.get("max") == "0":
+        if e.get("max") == 0:
             self.structural(e, "prohibited", ctx, f"not({rel})")
         full = self.xpath(steps) if last["kind"] != "ext" else f"{ctx}/{rel}"
         for fk in ("fixedUri", "fixedInteger", "fixedString"):
@@ -265,7 +265,7 @@ class SchProfile:
         eb = {**e, "citation": xb.get("citation") or e.get("citation")}
         if xb.get("min", 0) >= 1:
             self.add(rid(e, "xml-required"), ctx, rel, f"{component_name(e)} is required in XML", eb)
-        if xb.get("max") == "0":
+        if xb.get("max") == 0:
             self.add(rid(e, "xml-prohibited"), ctx, f"not({rel})", f"{component_name(e)} is not part of the XML binding", eb)
         for c in e.get("constraint", []):
             ck = c.get("check")

@@ -20,6 +20,7 @@ BASE_GEN = BASE + "generated/"                                    # generated sc
 
 SNAPSHOT = {t: ROOT + f"{t}/model/lote_model_{t}.json" for t in ("explicit", "implicit")}   # explicit: edited; implicit: frozen
 TRACK_GEN = {"explicit": ROOT + "explicit/generated/base/", "implicit": ROOT + "implicit/generated/"}
+EXPLICIT = ROOT + "explicit/"                                      # the active track; published to the validator without its *.md docs
 PROFILES_DIR = ROOT + "explicit/model/profiles/"                  # the annex D-I overlays on the explicit track
 PROFILES_GEN = ROOT + "explicit/generated/profiles/"              # the profiles build on the explicit track
 

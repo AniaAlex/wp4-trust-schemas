@@ -30,7 +30,7 @@ The models are written by hand (with Claude's help) and proofread against the te
 python -m venv .venv && .venv/bin/pip install -e ".[dev]"     # editable: the generator works on this directory
 
 lote-schemas build                    # generate the schemas from the models
-lote-schemas build --publish          # ... and copy the results into ../schema_validator (package data)
+lote-schemas build --publish          # ... and copy explicit/ into ../schema_validator (package data)
 lote-schemas publish --to DIR         # copy the current results elsewhere
 lote-schemas check explicit/generated/base/lote_core.xsd explicit/generated/base/lote_tie.xsd explicit/generated/base/lote_sie.xsd --scheme explicit
 pytest                                # all test suites

@@ -1,35 +1,35 @@
 {
-  "id": "lote-profile-F",
-  "title": "ETSI TS 119 602 V1.1.1 Annex F - WRPAC providers list",
+  "id": "lote-profile-E",
+  "title": "ETSI TS 119 602 V1.1.1 Annex E - Wallet providers list",
   "derivation": "constraint",
-  "baseDefinition": "base/model/schemes/explicit.json",
+  "baseDefinition": "explicit/model/lote_model_explicit.json",
   "baseCitation": {
     "quote": "shall comply with the scheme explicit JSON schema definition specified in Annex A",
-    "page": 54,
-    "line": 3246
+    "page": 50,
+    "line": 3041
   },
-  "annex": "F",
-  "lotetype": "http://uri.etsi.org/19602/LoTEType/EUWRPACProvidersList",
+  "annex": "E",
+  "lotetype": "http://uri.etsi.org/19602/LoTEType/EUWalletProvidersList",
   "differential": {
     "element": [
       {
-        "id": "F-LoTEVersionIdentifier-fixed",
-        "row": "Table F.1 LoTE version identifier",
+        "id": "E-LoTEVersionIdentifier-fixed",
+        "row": "Table E.1 LoTE version identifier",
         "path": "LoTE.ListAndSchemeInformation.LoTEVersionIdentifier",
         "fixedInteger": 1,
         "citation": {
           "quote": "The value of the LoTEVersionIdentifier component shall be \"1\".",
-          "page": 55,
-          "line": 3266
+          "page": 51,
+          "line": 3062
         }
       },
       {
-        "id": "F-seq-1",
-        "row": "Table F.1 LoTE sequence number",
+        "id": "E-seq-1",
+        "row": "Table E.1 LoTE sequence number",
         "path": "LoTE.ListAndSchemeInformation.LoTESequenceNumber",
         "constraint": [
           {
-            "key": "F-seq-1",
+            "key": "E-seq-1",
             "severity": "error",
             "human": "The first instance of the list is issued with LoTESequenceNumber 1.",
             "expression": null,
@@ -38,61 +38,61 @@
         ],
         "citation": {
           "quote": "LoTESequenceNumber component number set to \"1\".",
-          "page": 55,
-          "line": 3269
+          "page": 51,
+          "line": 3065
         }
       },
       {
-        "id": "F-LoTEType-fixed",
-        "row": "Table F.1 LoTE type",
+        "id": "E-LoTEType-fixed",
+        "row": "Table E.1 LoTE type",
         "path": "LoTE.ListAndSchemeInformation.LoTEType",
-        "fixedUri": "http://uri.etsi.org/19602/LoTEType/EUWRPACProvidersList",
+        "fixedUri": "http://uri.etsi.org/19602/LoTEType/EUWalletProvidersList",
         "citation": {
-          "quote": "http://uri.etsi.org/19602/LoTEType/EUWRPACProvidersList",
-          "page": 55,
-          "line": 3271
+          "quote": "http://uri.etsi.org/19602/LoTEType/EUWalletProvidersList",
+          "page": 51,
+          "line": 3067
         }
       },
       {
-        "id": "F-StatusDeterminationApproach-fixed",
-        "row": "Table F.1 Status determination approach",
+        "id": "E-StatusDeterminationApproach-fixed",
+        "row": "Table E.1 Status determination approach",
         "path": "LoTE.ListAndSchemeInformation.StatusDeterminationApproach",
-        "fixedUri": "http://uri.etsi.org/19602/WRPACProvidersList/StatusDetn/EU",
+        "fixedUri": "http://uri.etsi.org/19602/WalletProvidersList/StatusDetn/EU",
         "citation": {
-          "quote": "http://uri.etsi.org/19602/WRPACProvidersList/StatusDetn/EU",
-          "page": 55,
-          "line": 3281
+          "quote": "http://uri.etsi.org/19602/WalletProvidersList/StatusDetn/EU",
+          "page": 51,
+          "line": 3077
         }
       },
       {
-        "id": "F-SchemeTypeCommunityRules-fixed",
-        "row": "Table F.1 Scheme type/community/rules",
+        "id": "E-SchemeTypeCommunityRules-fixed",
+        "row": "Table E.1 Scheme type/community/rules",
         "path": "LoTE.ListAndSchemeInformation.SchemeTypeCommunityRules.uriValue",
-        "fixedUri": "http://uri.etsi.org/19602/WRPACProvidersList/schemerules/EU",
+        "fixedUri": "http://uri.etsi.org/19602/WalletProvidersList/schemerules/EU",
         "citation": {
-          "quote": "http://uri.etsi.org/19602/WRPACProvidersList/schemerules/EU",
-          "page": 55,
-          "line": 3283
+          "quote": "http://uri.etsi.org/19602/WalletProvidersList/schemerules/EU",
+          "page": 51,
+          "line": 3079
         }
       },
       {
-        "id": "F-SchemeTerritory-fixed",
-        "row": "Table F.1 Scheme territory",
+        "id": "E-SchemeTerritory-fixed",
+        "row": "Table E.1 Scheme territory",
         "path": "LoTE.ListAndSchemeInformation.SchemeTerritory",
         "fixedString": "EU",
         "citation": {
           "quote": "The value of the SchemeTerritory component shall be \"EU\".",
-          "page": 55,
-          "line": 3285
+          "page": 51,
+          "line": 3080
         }
       },
       {
-        "id": "F-next-6m",
-        "row": "Table F.1 Next update",
+        "id": "E-next-6m",
+        "row": "Table E.1 Next update",
         "path": "LoTE.ListAndSchemeInformation",
         "constraint": [
           {
-            "key": "F-next-6m",
+            "key": "E-next-6m",
             "severity": "error",
             "human": "NextUpdate is at most 6 months after ListIssueDateTime.",
             "expression": "NextUpdate.empty() or NextUpdate <= ListIssueDateTime + 6 months",
@@ -107,17 +107,17 @@
         ],
         "citation": {
           "quote": "The maximum value between the list issue date and time and the next update shall be 6 months.",
-          "page": 55,
-          "line": 3296
+          "page": 51,
+          "line": 3091
         }
       },
       {
-        "id": "F-sch-info",
-        "row": "Table F.1 Scheme information URI",
+        "id": "E-sch-info",
+        "row": "Table E.1 Scheme information URI",
         "path": "LoTE.ListAndSchemeInformation.SchemeInformationURI",
         "constraint": [
           {
-            "key": "F-sch-info",
+            "key": "E-sch-info",
             "severity": "error",
             "human": "One URI for information about the list and one where all previous instances can be retrieved; one URI may serve both, so the count is not enforced.",
             "expression": null,
@@ -126,32 +126,32 @@
         ],
         "citation": {
           "quote": "The SchemeInformationURI component shall contain:",
-          "page": 55,
-          "line": 3277
+          "page": 51,
+          "line": 3073
         }
       },
       {
-        "id": "F-HistoricalInformationPeriod-prohibited",
-        "row": "Table F.1 Historical information period",
+        "id": "E-HistoricalInformationPeriod-prohibited",
+        "row": "Table E.1 Historical information period",
         "path": "LoTE.ListAndSchemeInformation.HistoricalInformationPeriod",
-        "max": "0",
+        "max": 0,
         "citation": {
           "quote": "The HistoricalInformationPeriod component shall not be present",
-          "page": 55,
-          "line": 3289
+          "page": 51,
+          "line": 3084
         }
       },
       {
-        "id": "F-PointersToOtherLoTE-required",
-        "row": "Table F.1 Pointers to other LoTEs",
+        "id": "E-PointersToOtherLoTE-required",
+        "row": "Table E.1 Pointers to other LoTEs",
         "path": "LoTE.ListAndSchemeInformation.PointersToOtherLoTE",
         "min": 1,
         "constraint": [
           {
-            "key": "F-ptr-self",
+            "key": "E-ptr-self",
             "severity": "error",
             "human": "One pointer designates this list itself (identified here by its LoTEType qualifier).",
-            "expression": "OtherLoTEPointer.LoTEQualifiers.LoTEQualifier.where(LoTEType = 'http://uri.etsi.org/19602/LoTEType/EUWRPACProvidersList').exists()",
+            "expression": "OtherLoTEPointer.LoTEQualifiers.LoTEQualifier.where(LoTEType = 'http://uri.etsi.org/19602/LoTEType/EUWalletProvidersList').exists()",
             "checkable": "partly: that the location is this list itself needs the publication URL",
             "check": {
               "type": "contains",
@@ -161,24 +161,24 @@
               ],
               "field": "LoTEType",
               "match": {
-                "equals": "http://uri.etsi.org/19602/LoTEType/EUWRPACProvidersList"
+                "equals": "http://uri.etsi.org/19602/LoTEType/EUWalletProvidersList"
               }
             }
           }
         ],
         "citation": {
           "quote": "The PointersToOtherLoTE component shall contain a pointer to the present",
-          "page": 55,
-          "line": 3292
+          "page": 51,
+          "line": 3087
         }
       },
       {
-        "id": "F-te-name",
-        "row": "Table F.2 TE name",
+        "id": "E-te-name",
+        "row": "Table E.2 TE name",
         "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityInformation.TEName",
         "constraint": [
           {
-            "key": "F-te-name",
+            "key": "E-te-name",
             "severity": "error",
             "human": "TEName is the (legal) name of the listed provider.",
             "expression": null,
@@ -187,17 +187,17 @@
         ],
         "citation": {
           "quote": "The value of the TEName component shall be the name of the",
-          "page": 56,
-          "line": 3320
+          "page": 52,
+          "line": 3115
         }
       },
       {
-        "id": "F-trade",
-        "row": "Table F.2 TE trade name",
+        "id": "E-trade",
+        "row": "Table E.2 TE trade name",
         "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityInformation.TETradeName",
         "constraint": [
           {
-            "key": "F-trade",
+            "key": "E-trade",
             "severity": "error",
             "human": "The official registration identifier where one exists (organizationIdentifier / serialNumber semantics of ETSI EN 319 412-1).",
             "expression": null,
@@ -206,17 +206,17 @@
         ],
         "citation": {
           "quote": "The TETradeName component shall include an official registration",
-          "page": 56,
-          "line": 3322
+          "page": 52,
+          "line": 3117
         }
       },
       {
-        "id": "F-te-tel",
-        "row": "Table F.2 TE address",
+        "id": "E-te-tel",
+        "row": "Table E.2 TE address",
         "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityInformation.TEAddress",
         "constraint": [
           {
-            "key": "F-te-tel",
+            "key": "E-te-tel",
             "severity": "error",
             "human": "The electronic address contains a contact phone number (tel: URI).",
             "expression": "TEElectronicAddress.where(uriValue.startsWith('tel:')).exists()",
@@ -235,17 +235,17 @@
         ],
         "citation": {
           "quote": "contact email and contact phone number",
-          "page": 56,
-          "line": 3336
+          "page": 52,
+          "line": 3130
         }
       },
       {
-        "id": "F-te-info-count",
-        "row": "Table F.2 TE information URI",
+        "id": "E-te-info-count",
+        "row": "Table E.2 TE information URI",
         "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityInformation",
         "constraint": [
           {
-            "key": "F-te-info-count",
+            "key": "E-te-info-count",
             "severity": "error",
             "human": "At least the policy page (a) and the Member State URI (c).",
             "expression": "TEInformationURI.count() >= 2",
@@ -257,7 +257,7 @@
             }
           },
           {
-            "key": "F-te-info-a",
+            "key": "E-te-info-a",
             "severity": "error",
             "human": "(a) An http(s) page with the provider's policies, terms and conditions.",
             "expression": "TEInformationURI.where(uriValue.matches('^https?://') and uriValue.startsWith('http://uri.etsi.org/19602/ListOfTrustedEntities/').not()).exists()",
@@ -280,27 +280,27 @@
         ],
         "citation": {
           "quote": "The TEInformationURI component shall contain:",
-          "page": 56,
-          "line": 3339
+          "page": 52,
+          "line": 3132
         }
       },
       {
-        "id": "F-te-cc",
-        "row": "Table F.2 TE information URI (Member State URI)",
+        "id": "E-te-cc",
+        "row": "Table E.2 TE information URI (Member State URI)",
         "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityInformation",
         "constraint": [
           {
-            "key": "F-te-cc",
+            "key": "E-te-cc",
             "severity": "error",
-            "human": "(c) http://uri.etsi.org/19602/ListOfTrustedEntities/WRPACProvider/CC for the responsible Member State ('CC' field: Greece = EL, clause 6.1.5).",
-            "expression": "TEInformationURI.where(uriValue.matches('^http://uri\\\\.etsi\\\\.org/19602/ListOfTrustedEntities/WRPACProvider/(AT|BE|BG|CY|CZ|DE|DK|EE|EL|ES|FI|FR|HR|HU|IE|IT|LT|LU|LV|MT|NL|PL|PT|RO|SE|SI|SK)$')).exists()",
+            "human": "(c) http://uri.etsi.org/19602/ListOfTrustedEntities/WalletProvider/CC for the responsible Member State ('CC' field: Greece = EL, clause 6.1.5).",
+            "expression": "TEInformationURI.where(uriValue.matches('^http://uri\\\\.etsi\\\\.org/19602/ListOfTrustedEntities/WalletProvider/(AT|BE|BG|CY|CZ|DE|DK|EE|EL|ES|FI|FR|HR|HU|IE|IT|LT|LU|LV|MT|NL|PL|PT|RO|SE|SI|SK)$')).exists()",
             "checkable": "yes",
             "check": {
               "type": "contains",
               "component": "TEInformationURI",
               "field": "uriValue",
               "match": {
-                "prefix": "http://uri.etsi.org/19602/ListOfTrustedEntities/WRPACProvider/",
+                "prefix": "http://uri.etsi.org/19602/ListOfTrustedEntities/WalletProvider/",
                 "codes": [
                   "AT",
                   "BE",
@@ -337,75 +337,113 @@
         ],
         "citation": {
           "quote": "\"CC\" is replaced by the ISO 3166-1 [2] Alpha 2 code of the Member State which is responsible for that",
-          "page": 56,
-          "line": 3348
+          "page": 52,
+          "line": 3140
         }
       },
       {
-        "id": "F-ServiceTypeIdentifier-values",
-        "row": "Table F.3 Service type identifier",
+        "id": "E-assoc",
+        "row": "Table E.2 TE information extensions",
+        "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityInformation.TEInformationExtensions",
+        "constraint": [
+          {
+            "key": "E-assoc",
+            "severity": "error",
+            "human": "Where applicable, OtherAssociatedBodies names the associated body responsible for the provision of the wallet solution.",
+            "expression": null,
+            "checkable": "no: 'where applicable'"
+          }
+        ],
+        "citation": {
+          "quote": "Where applicable, the OtherAssociatedBody extension shall be used",
+          "page": 52,
+          "line": 3143
+        }
+      },
+      {
+        "id": "E-ServiceTypeIdentifier-values",
+        "row": "Table E.3 Service type identifier",
         "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityServices.TrustedEntityService.ServiceInformation.ServiceTypeIdentifier",
         "binding": {
           "strength": "required",
           "valueSet": [
-            "http://uri.etsi.org/19602/SvcType/WRPAC/Issuance",
-            "http://uri.etsi.org/19602/SvcType/WRPAC/Revocation"
+            "http://uri.etsi.org/19602/SvcType/WalletSolution/Issuance",
+            "http://uri.etsi.org/19602/SvcType/WalletSolution/Revocation"
           ]
         },
         "citation": {
           "quote": "to the exclusion of any other",
-          "page": 57,
-          "line": 3371
+          "page": 53,
+          "line": 3164
         }
       },
       {
-        "id": "F-X509Certificate-required",
-        "row": "Table F.3 Service digital identity",
+        "id": "E-svc-name",
+        "row": "Table E.3 Service name",
+        "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityServices.TrustedEntityService.ServiceInformation.ServiceName",
+        "constraint": [
+          {
+            "key": "E-svc-name",
+            "severity": "error",
+            "human": "The name of a wallet solution as published in the Official Journal.",
+            "expression": null,
+            "checkable": "no: needs the Official Journal"
+          }
+        ],
+        "citation": {
+          "quote": "The value of the ServiceName component shall be the name of a wallet",
+          "page": 53,
+          "line": 3170
+        }
+      },
+      {
+        "id": "E-X509Certificate-required",
+        "row": "Table E.3 Service digital identity",
         "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityServices.TrustedEntityService.ServiceInformation.ServiceDigitalIdentity.X509Certificate",
         "min": 1,
         "citation": {
           "quote": "The ServiceDigitalIdentity component shall contain one or more",
-          "page": 57,
-          "line": 3379
+          "page": 53,
+          "line": 3175
         }
       },
       {
-        "id": "F-sdi-content",
-        "row": "Table F.3 Service digital identity (certificate content)",
+        "id": "E-sdi-content",
+        "row": "Table E.3 Service digital identity (certificate content)",
         "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityServices.TrustedEntityService.ServiceInformation.ServiceDigitalIdentity",
         "constraint": [
           {
-            "key": "F-sdi-content",
+            "key": "E-sdi-content",
             "severity": "error",
-            "human": "Where applicable, the certificates carry the information that distinguishes access certificates from other certificates.",
+            "human": "The certificates certify the TEName and, where applicable, the TETradeName registration number.",
             "expression": null,
             "checkable": "partly: needs certificate parsing"
           }
         ],
         "citation": {
-          "quote": "the information required to distinguish",
-          "page": 57,
-          "line": 3382
+          "quote": "certified identity data includes the name",
+          "page": 53,
+          "line": 3179
         }
       },
       {
-        "id": "F-ServiceStatus-prohibited",
-        "row": "Table F.3 Service current status",
+        "id": "E-ServiceStatus-prohibited",
+        "row": "Table E.3 Service current status",
         "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityServices.TrustedEntityService.ServiceInformation.ServiceStatus",
-        "max": "0",
+        "max": 0,
         "citation": {
           "quote": "The ServiceStatus component shall not be used.",
-          "page": 57,
-          "line": 3385
+          "page": 53,
+          "line": 3182
         }
       },
       {
-        "id": "F-removal",
-        "row": "Table F.3 Service current status (removal)",
+        "id": "E-removal",
+        "row": "Table E.3 Service current status (removal)",
         "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityServices.TrustedEntityService.ServiceInformation.ServiceStatus",
         "constraint": [
           {
-            "key": "F-removal",
+            "key": "E-removal",
             "severity": "error",
             "human": "An entity or service that loses its approval is removed from the list.",
             "expression": null,
@@ -414,58 +452,78 @@
         ],
         "citation": {
           "quote": "removed from the",
-          "page": 57,
-          "line": 3396
+          "page": 53,
+          "line": 3191
         }
       },
       {
-        "id": "F-StatusStartingTime-prohibited",
-        "row": "Table F.3 Current status starting date and time",
+        "id": "E-StatusStartingTime-prohibited",
+        "row": "Table E.3 Current status starting date and time",
         "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityServices.TrustedEntityService.ServiceInformation.StatusStartingTime",
-        "max": "0",
+        "max": 0,
         "citation": {
           "quote": "The StatusStartingTime component shall not be used.",
-          "page": 57,
-          "line": 3397
+          "page": 53,
+          "line": 3195
         }
       },
       {
-        "id": "F-ServiceHistory-prohibited",
-        "row": "Table F.1 Historical information period (consequence)",
+        "id": "E-ServiceHistory-prohibited",
+        "row": "Table E.1 Historical information period (consequence)",
         "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityServices.TrustedEntityService.ServiceHistory",
-        "max": "0",
+        "max": 0,
         "comment": "Derived: history is not kept (Table x.1), and clause 6.4.3 says ServiceHistory 'shall not be present' when history is not retained.",
         "citation": {
           "quote": "historical information is not kept in the list",
-          "page": 55,
-          "line": 3290
+          "page": 51,
+          "line": 3085
         }
       },
       {
-        "id": "F-Signature-json-prohibited",
-        "row": "F.4 Signature",
+        "id": "E-ServiceUniqueIdentifier-required",
+        "row": "Table E.3 Service information extensions",
+        "path": "LoTE.TrustedEntitiesList.TrustedEntity.TrustedEntityServices.TrustedEntityService.ServiceInformation.ServiceInformationExtensions.ServiceUniqueIdentifier",
+        "min": 1,
+        "constraint": [
+          {
+            "key": "E-sui",
+            "severity": "error",
+            "human": "The reference number of the wallet solution as published in the Official Journal.",
+            "expression": null,
+            "checkable": "no: needs the Official Journal"
+          }
+        ],
+        "citation": {
+          "quote": "The ServiceUniqueIdentifier extension shall be used to provide the",
+          "page": 53,
+          "line": 3209
+        }
+      },
+      {
+        "id": "E-Signature-json-prohibited",
+        "row": "E.4 Signature",
         "path": "LoTE.Signature",
         "json": {
-          "max": "0",
+          "max": 0,
           "from": "text",
           "note": "In JSON the list is signed by encapsulation: a compact JAdES Baseline B signature (ETSI TS 119 182-1) whose payload is the list; the published file is the compact JWS (header.payload.signature). The Signature component is not used in JSON (6.8.0). WP4 currently signs JSON lists with a detached JWS in JSON serialization next to LoTE ({\"LoTE\": ..., \"signature\": {protected, signature}}): neither compact nor encapsulating, to be reported once a signature validator exists.",
           "citation": {
             "quote": "shall be signed by means of a compact JAdES Baseline B signature",
-            "page": 57,
-            "line": 3419
+            "page": 53,
+            "line": 3220
           }
         },
         "xml": {
           "name": "ds:Signature",
           "from": "wp4",
-          "reason": "Annex F allows JSON only (F.1). WP4 also validates XML lists of this annex for their content, with the core's XML binding of the signature: ds:Signature inside the list (enveloped) or the list inside the signature (enveloping), 6.8.0. Such a list does not conform by format (project_decisions_vs_etsi.md #1).",
+          "reason": "Annex E allows JSON only (E.1). WP4 also validates XML lists of this annex for their content, with the core's XML binding of the signature: ds:Signature inside the list (enveloped) or the list inside the signature (enveloping), 6.8.0. Such a list does not conform by format (project_decisions_vs_etsi.md #1).",
           "note": "Optional, as in the core."
         },
         "validation": "not-schema-based",
         "validated_by": "a signature validator (not built yet): envelope, header, signing certificate, cryptographic check",
         "constraint": [
           {
-            "key": "F-sig",
+            "key": "E-sig",
             "severity": "error",
             "human": "Signed with a compact JAdES Baseline B signature (ETSI TS 119 182-1).",
             "expression": null,
@@ -474,8 +532,8 @@
         ],
         "citation": {
           "quote": "shall be signed by means of a compact JAdES Baseline B signature",
-          "page": 57,
-          "line": 3419
+          "page": 53,
+          "line": 3220
         }
       }
     ]
