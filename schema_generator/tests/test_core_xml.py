@@ -1,4 +1,4 @@
-"""Clause-by-clause tests of the generated core XML binding (core/generated/lote_core.xsd + lote_core.sch)
+"""Clause-by-clause tests of the generated core XML binding (base/generated/lote_core.xsd + lote_core.sch)
 against ETSI TS 119 602 V1.1.1. A case passes when the verdict of XSD + Schematron together matches the text.
 
 """
@@ -9,7 +9,7 @@ from lxml import etree, isoschematron
 
 from lote_schema_generator.paths import ROOT as _ROOT, HANDWRITTEN_CORE, HANDWRITTEN_PROFILES  # noqa: F401
 ROOT = pathlib.Path(_ROOT)
-GEN = ROOT / "core" / "generated"
+GEN = ROOT / "base" / "generated"
 XSD = xmlschema.XMLSchema(str(GEN / "lote_core.xsd"))
 SCH = isoschematron.Schematron(etree.parse(str(GEN / "lote_core.sch")))
 NS = "http://uri.etsi.org/019602/v1#"

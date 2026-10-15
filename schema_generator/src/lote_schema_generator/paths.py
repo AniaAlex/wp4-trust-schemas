@@ -1,7 +1,7 @@
 """Where the generator reads and writes: one place for every location of the schema_generator project.
 
-The generator works on its project directory (the parent of src/): the spec text, the model, the generated schemas and
-the reference schemas live there, not inside the installed package. Install the package editable (pip install -e .) or
+The generator works on its project directory (the parent of src/): the models, the generated schemas and the reference
+schemas live there, not inside the installed package. Install the package editable (pip install -e .) or
 set LOTE_SCHEMAS_ROOT to the project directory.
 
 Paths are strings ending in "/" where they name a directory, as the modules join them with "+".
@@ -12,20 +12,18 @@ from pathlib import Path
 ROOT = os.environ.get("LOTE_SCHEMAS_ROOT") or str(Path(__file__).resolve().parents[2])
 ROOT = ROOT.rstrip("/") + "/"
 
-SPEC = ROOT + "spec/ts_119602v010101p.txt"                       # the text of ETSI TS 119 602 V1.1.1
-
-MODEL_DIR = ROOT + "model/"
-MODEL = MODEL_DIR + "lote_model.json"                             # the core model (both kinds of list)
+BASE = ROOT + "base/"                                              # the core model (both kinds of list), frozen
+MODEL_DIR = BASE + "model/"
+MODEL = MODEL_DIR + "lote_model.json"                             # the core model
 SCHEMES_DIR = MODEL_DIR + "schemes/"                              # the explicit / implicit differentials
-PROFILES_DIR = MODEL_DIR + "profiles/"                            # the annex D-I overlays
+BASE_GEN = BASE + "generated/"                                    # generated schemas: both kinds of list
 
-CORE_GEN = ROOT + "core/generated/"                               # generated schemas: both kinds of list
-SNAPSHOT = {t: ROOT + f"{t}/model/lote_model_{t}.json" for t in ("explicit", "implicit")}
-TRACK_GEN = {t: ROOT + f"{t}/generated/" for t in ("explicit", "implicit")}
-PROFILES_GEN = TRACK_GEN["explicit"] + "profiles/"                # the profiles build on the explicit track
+SNAPSHOT = {t: ROOT + f"{t}/model/lote_model_{t}.json" for t in ("explicit", "implicit")}   # explicit: edited; implicit: frozen
+TRACK_GEN = {"explicit": ROOT + "explicit/generated/base/", "implicit": ROOT + "implicit/generated/"}
+PROFILES_DIR = ROOT + "explicit/model/profiles/"                  # the annex D-I overlays on the explicit track
+PROFILES_GEN = ROOT + "explicit/generated/profiles/"              # the profiles build on the explicit track
 
 REFERENCE = ROOT + "reference/"
-FORGE = REFERENCE + "forge/"                                      # ETSI's Annex A bindings, as published on ETSI Forge
 HANDWRITTEN_CORE = REFERENCE + "handwritten/1960201_json_schema_text_based.json"
 HANDWRITTEN_PROFILES = REFERENCE + "handwritten/profiles/"
 

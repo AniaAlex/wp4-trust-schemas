@@ -1,23 +1,22 @@
 """The build chain, in order, and the hand-over of its outputs to the validator package.
 
-    spec text -> sources.py -> build_model -> build_schemes -> build_profiles
-              -> gen_json / gen_xsd (core, explicit, implicit) -> gen_profiles_from_model -> [publish]
+    models (base/model/ frozen, implicit/model/ frozen, explicit/model/ edited by hand)
+    -> gen_json / gen_xsd (base, explicit, implicit) -> gen_profiles_from_model -> [publish]
 
-Every step runs as its own process (python -m lote_schema_generator.<step>), so a step that fails a check stops the
-chain with that step's own error messages; the outputs of the steps before it stay as they are.
+base/derive_tracks.py (core + differential -> track snapshots) is not part of the chain while the base model is frozen.
+
+Every step runs as its own process (python -m lote_schema_generator.<step>), so a step that
+fails a check stops the chain with that step's own error messages; the outputs of the steps before it stay as they are.
 """
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-from .paths import MODEL, PROFILES_DIR, ROOT, SNAPSHOT, TRACK_GEN, VALIDATOR_SCHEMAS
+from .paths import MODEL, PROFILES_DIR, PROFILES_GEN, ROOT, SNAPSHOT, TRACK_GEN, VALIDATOR_SCHEMAS
 
 STEPS = [
-    ("build_model", []),                       # core model, citations from sources.py
-    ("build_schemes", []),                     # explicit and implicit tracks: differentials and snapshots
-    ("build_profiles", []),                    # annex D-I overlays, on the explicit track
-    ("gen_json", ["--scheme", "core"]), ("gen_xsd", ["--scheme", "core"]),
+    ("gen_json", ["--scheme", "base"]), ("gen_xsd", ["--scheme", "base"]),
     ("gen_json", ["--scheme", "explicit"]), ("gen_xsd", ["--scheme", "explicit"]),
     ("gen_json", ["--scheme", "implicit"]), ("gen_xsd", ["--scheme", "implicit"]),
     ("gen_profiles_from_model", []),           # profile JSON and Schematron, into explicit/generated/profiles/
@@ -41,15 +40,18 @@ def build(quiet=False):
 def publish(target=VALIDATOR_SCHEMAS, quiet=False):
     """Copy what the validator needs into its package data. The target is replaced, so it holds no stale files.
 
-        <track>/                 the track's generated schemas (explicit/ also holds the profile schemas)
+        explicit/base/           the explicit track's schemas; explicit/profiles/ the profile schemas (D-I)
+        implicit/                the implicit track's schemas
         model/lote_model.json    the core model both tracks derive from
         model/<track>/           the track's snapshot; model/explicit/profiles/ the annex overlays
     """
     target = Path(target)
     if target.exists():
         shutil.rmtree(target)
+    shutil.copytree(TRACK_GEN["explicit"], target / "explicit" / "base")
+    shutil.copytree(PROFILES_GEN, target / "explicit" / "profiles")
+    shutil.copytree(TRACK_GEN["implicit"], target / "implicit")
     for track in ("explicit", "implicit"):
-        shutil.copytree(TRACK_GEN[track], target / track)
         (target / "model" / track).mkdir(parents=True)
         shutil.copy2(SNAPSHOT[track], target / "model" / track)
     shutil.copytree(PROFILES_DIR, target / "model" / "explicit" / "profiles")

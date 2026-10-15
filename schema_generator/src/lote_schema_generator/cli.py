@@ -1,9 +1,9 @@
 """lote-schemas: build, check and publish the LoTE schemas generated from ETSI TS 119 602.
 
-    lote-schemas build                  run the whole chain (model, tracks, profiles, schemas)
+    lote-schemas build                  generate the schemas from the models (core, tracks, profiles)
     lote-schemas build --publish        ... and copy the results into the validator package
     lote-schemas publish [--to DIR]     copy the current results into the validator package (or DIR)
-    lote-schemas check SCHEMA ...       check a schema against the text (see lote_schema_generator.check)
+    lote-schemas check SCHEMA ...       check a schema against the model (see lote_schema_generator.check)
 """
 import argparse
 import sys
@@ -23,7 +23,7 @@ def main(argv=None):
     b.add_argument("--quiet", action="store_true")
     p = sub.add_parser("publish", help="copy the generated schemas into the validator package")
     p.add_argument("--to", default=VALIDATOR_SCHEMAS, help="target directory (default: %(default)s)")
-    sub.add_parser("check", help="check a schema against the text (options: lote-schemas check --help)")
+    sub.add_parser("check", help="check a schema against the model (options: lote-schemas check --help)")
     a = ap.parse_args(argv)
     if a.command == "build":
         rc = pipeline.build(quiet=a.quiet)

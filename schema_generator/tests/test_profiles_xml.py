@@ -1,4 +1,4 @@
-"""Tests of the generated XML profiles (Annexes D-I): explicit/generated/lote_core.xsd + lote_core.sch + the profile's .sch.
+"""Tests of the generated XML profiles (Annexes D-I): explicit/generated/base/lote_core.xsd + lote_core.sch + the profile's .sch.
 The cases mirror test_profiles.py (JSON) so both bindings are held to the same requirements, plus the 6-month NextUpdate
 cases, which only Schematron can check.
 
@@ -11,8 +11,8 @@ from lxml import etree, isoschematron
 from lote_schema_generator.paths import ROOT as _ROOT, HANDWRITTEN_CORE, HANDWRITTEN_PROFILES  # noqa: F401
 ROOT = pathlib.Path(_ROOT)
 GEN = ROOT / "explicit" / "generated"                  # the profiles build on the explicit track (x.1)
-XSD = xmlschema.XMLSchema(str(GEN / "lote_core.xsd"))
-CORE_SCH = isoschematron.Schematron(etree.parse(str(GEN / "lote_core.sch")))
+XSD = xmlschema.XMLSchema(str(GEN / "base" / "lote_core.xsd"))
+CORE_SCH = isoschematron.Schematron(etree.parse(str(GEN / "base" / "lote_core.sch")))
 NS, E = "http://uri.etsi.org/019602/v1#", "http://uri.etsi.org/19602/"
 SIE = "http://uri.etsi.org/019602/v1/ServiceInformationExtensions"
 CERT = "MIIBszCCAVmgAwIBAgIUQQ=="

@@ -2,7 +2,7 @@
   "id": "lote-profile-D",
   "title": "ETSI TS 119 602 V1.1.1 Annex D - PID providers list",
   "derivation": "constraint",
-  "baseDefinition": "model/schemes/explicit.json",
+  "baseDefinition": "base/model/schemes/explicit.json",
   "baseCitation": {
     "quote": "shall comply with the scheme explicit JSON schema definition specified in Annex A",
     "page": 46,

@@ -160,11 +160,12 @@ def test_cli(capsys):
 
 @pytest.mark.skipif(not GENERATOR.is_dir(), reason="the generator project is not next to this one")
 @pytest.mark.parametrize("published,source", [
-    ("explicit", "explicit/generated"), ("implicit", "implicit/generated"),
-    ("model/lote_model.json", "model/lote_model.json"),
+    ("explicit/base", "explicit/generated/base"), ("explicit/profiles", "explicit/generated/profiles"),
+    ("implicit", "implicit/generated"),
+    ("model/lote_model.json", "base/model/lote_model.json"),
     ("model/explicit/lote_model_explicit.json", "explicit/model/lote_model_explicit.json"),
     ("model/implicit/lote_model_implicit.json", "implicit/model/lote_model_implicit.json"),
-    ("model/explicit/profiles", "model/profiles"),
+    ("model/explicit/profiles", "explicit/model/profiles"),
 ])
 def test_published_schemas_are_current(published, source):
     """The package data is the generator's latest output: run `lote-schemas publish` if this fails."""

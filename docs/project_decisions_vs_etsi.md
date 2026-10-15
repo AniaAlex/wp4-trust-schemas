@@ -1,6 +1,6 @@
 # Project decisions vs ETSI TS 119 602
 
-Where this project's schemas and tools deliberately differ from what ETSI TS 119 602 V1.1.1 (2025-11) or its Annex A bindings (ETSI Forge) prescribe, and why. Quotes are verbatim from [ts_119602v010101p.txt](../schema_generator/spec/ts_119602v010101p.txt); page and line refer to that file.
+Where this project's schemas and tools deliberately differ from what ETSI TS 119 602 V1.1.1 (2025-11) or its Annex A bindings (ETSI Forge) prescribe, and why. Quotes are verbatim from [ts_119602v010101p.txt](spec/ts_119602v010101p.txt); page and line refer to that file.
 
 ## 1. XML profiles for annexes that allow only JSON
 
@@ -37,7 +37,7 @@ Every list "shall be signed by means of an AdES digital signature at conformance
 
 ## 3. WP4 lists are explicit; the implicit track is not used in WP4
 
-TS 119 602 allows two kinds of list: scheme information "may be provided either implicitly or explicitly" (6.3.0, p. 15, line 895). This project builds both as tracks ([explicit/](../schema_generator/explicit/), [implicit/](../schema_generator/implicit/); see [docs/model/README.md](../schema_generator/model/README.md), Tracks).
+TS 119 602 allows two kinds of list: scheme information "may be provided either implicitly or explicitly" (6.3.0, p. 15, line 895). This project builds both as tracks ([explicit/](../schema_generator/explicit/), [implicit/](../schema_generator/implicit/); see [base/model/README.md](../schema_generator/base/model/README.md), Tracks).
 
 WP4 mocks the EU community rules, so its lists behave like the real EU lists, and those are explicit without exception: every annex requires it ("The PID providers list shall comply with the scheme explicit JSON schema definition specified in Annex A", D.1, p. 46, line 2838; the same in E.1–I.1).
 
@@ -49,3 +49,21 @@ WP4 mocks the EU community rules, so its lists behave like the real EU lists, an
 **The implicit track** is provided for completeness of TS 119 602, for communities whose scheme is known out of band (closed federations, internal lists). It is not used in WP4.
 
 **Consequence for the current WP4 LoTL.** The decoded LoTL (2026-10-06) carries `SchemeName`, which makes it explicit (Table 1: "/" for implicit lists), but lacks `SchemeOperatorAddress`, `SchemeInformationURI`, `StatusDeterminationApproach`, `SchemeTypeCommunityRules` and `PolicyOrLegalNotice`, as well as the mandatory `LoTETag` (clause 5; see etsi_defects.md #20). It should add them, not drop `SchemeName` to pass as implicit: an implicit LoTL would contradict the EU model WP4 mocks.
+
+## 4. The base model and the implicit track are frozen; the explicit track is edited directly
+
+Since 2026-10-15 the project works on the explicit track only (see #3: every WP4 list is explicit). To keep that work simple, the explicit model is the one file edited, and what serves only both kinds of list or implicit lists is frozen:
+
+| File | Status |
+|---|---|
+| [base/model/lote_model.json](../schema_generator/base/model/lote_model.json) (both kinds of list) | frozen |
+| [base/model/schemes/explicit.json](../schema_generator/base/model/schemes/explicit.json), [implicit.json](../schema_generator/base/model/schemes/implicit.json) (track differentials) | frozen |
+| [implicit/model/lote_model_implicit.json](../schema_generator/implicit/model/lote_model_implicit.json) | frozen |
+| [explicit/model/lote_model_explicit.json](../schema_generator/explicit/model/lote_model_explicit.json) and the profile overlays | active, edited by hand |
+
+- **How it is marked:** each frozen file has `"status": "frozen"` and a `frozen` entry (since, reason, what is still allowed, when to unfreeze); the explicit model has `"status": "active"`.
+- **How it is enforced:** [tests/test_frozen.py](../schema_generator/tests/test_frozen.py) pins the SHA-256 of every frozen file. [base/derive_tracks.py](../schema_generator/base/derive_tracks.py), which derived the track models from the base model, is out of the build and refuses to run while the base model is frozen, so it cannot overwrite the explicit model.
+- **Still allowed:** correcting a misquoted or misplaced citation in a frozen file, with its hash updated in the same commit.
+- **Still built:** the base and implicit schemas are regenerated and tested on every build, so a generator change cannot break them unnoticed; they only stop receiving model changes.
+- **Consequence:** the explicit model will drift from the base model. Its `scheme` entries still record what Table 1 changes, but a later change in the explicit model is not reflected in the base model or the implicit track.
+- **Unfreeze when:** ETSI publishes an implicit binding or an erratum to clause 6, or WP4 needs implicit lists. Then carry the explicit changes made since the freeze back into the base model (or the explicit differential), set the status back, and put `derive_tracks.py` back into the build.

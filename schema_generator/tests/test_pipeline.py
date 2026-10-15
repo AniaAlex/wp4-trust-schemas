@@ -1,5 +1,5 @@
-"""The build chain is reproducible: run on a copy of this project, it writes exactly the model and the schemas that are
-committed here. A difference means a generated file was edited by hand, or a change in the code was not rebuilt."""
+"""The build chain is reproducible: run on a copy of this project, it writes exactly the schemas that are committed here.
+A difference means a generated file was edited by hand, or a change in a model or in the code was not rebuilt."""
 import filecmp
 import os
 import shutil
@@ -10,8 +10,8 @@ import pytest
 from lote_schema_generator import pipeline
 from lote_schema_generator.paths import ROOT
 
-INPUTS = ["spec", "model", "reference", "core", "explicit", "implicit"]
-OUTPUTS = ["model", "core/generated", "explicit", "implicit"]
+INPUTS = ["base", "reference", "explicit", "implicit"]
+OUTPUTS = ["base/generated", "explicit/generated", "implicit/generated"]
 
 
 def tree(d):
@@ -43,6 +43,6 @@ def test_build_reproduces_committed_outputs(rebuilt, out):
 def test_publish(tmp_path):
     assert pipeline.publish(tmp_path / "schemas", quiet=True) == 0
     got = tree(tmp_path / "schemas")
-    for f in ["__init__.py", "model/lote_model.json", "explicit/lote_core.xsd", "implicit/lote_core.sch", "explicit/profiles",
+    for f in ["__init__.py", "model/lote_model.json", "explicit/base/lote_core.xsd", "implicit/lote_core.sch", "explicit/profiles",
               "model/explicit/lote_model_explicit.json", "model/explicit/profiles", "model/implicit/lote_model_implicit.json"]:
         assert any(str(p).startswith(f) for p in got), f

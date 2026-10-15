@@ -11,14 +11,14 @@ sentence of ETSI TS 119 602 it breaks: rule id, location in the list, clause or 
     report = validate("list.json", profile="D")          # report.valid, report.track, report.findings
 
 Schemas: the package data in schemas/ (published by the generator: `lote-schemas publish`), or LOTE_SCHEMAS_DIR.
-Tracks (clause 6.3.0, Table 1): schemas/explicit/ or schemas/implicit/. Without --explicit or --implicit the track is
+Tracks (clause 6.3.0, Table 1): schemas/explicit/base/ or schemas/implicit/. Without --explicit or --implicit the track is
 inferred: a list is explicit as soon as it contains an element Table 1 forbids for implicit lists (SchemeName,
 SchemeInformationURI, StatusDeterminationApproach, SchemeTypeCommunityRules, PolicyOrLegalNotice). --profile implies
 --explicit: every annex requires a scheme explicit list (D.1-I.1).
 
 Layers, in order:
-  XML   the track's XSD (lote_core.xsd), its Schematron (lote_core.sch), profile Schematron (profiles/*.sch)
-  JSON  the track's JSON Schema, or the profile's (profiles/*.json allOf the explicit track), then the profile rules JSON
+  XML   the track's XSD (lote_core.xsd), its Schematron (lote_core.sch), profile Schematron (explicit/profiles/*.sch)
+  JSON  the track's JSON Schema, or the profile's (explicit/profiles/*.json allOf the explicit track), then the profile rules JSON
         Schema cannot express (x-rules-layer entries with a 'check', e.g. the 6-month NextUpdate rule)
 Rule ids and citations:
   profile rules     the overlay element of the rule id (schemas/model/explicit/profiles/*.json): D-LoTEType-fixed
@@ -41,8 +41,9 @@ from dataclasses import dataclass, asdict, field
 from pathlib import Path
 
 SCHEMAS = os.environ.get("LOTE_SCHEMAS_DIR") or str(Path(__file__).resolve().parent / "schemas")
-TRACKS = {t: {"gen": os.path.join(SCHEMAS, t), "model": os.path.join(SCHEMAS, "model", t, f"lote_model_{t}.json")}
-          for t in ("explicit", "implicit")}
+TRACKS = {t: {"gen": os.path.join(SCHEMAS, *gen), "model": os.path.join(SCHEMAS, "model", t, f"lote_model_{t}.json")}
+          for t, gen in (("explicit", ("explicit", "base")), ("implicit", ("implicit",)))}
+PROFILES = os.path.join(SCHEMAS, "explicit", "profiles")  # the profile schemas, next to the explicit track's base
 EXPLICIT_MARKERS = ["SchemeName", "SchemeInformationURI", "StatusDeterminationApproach", "SchemeTypeCommunityRules",
                     "PolicyOrLegalNotice"]                # "/" in Table 1's implicit column
 OVERLAYS = os.path.join(SCHEMAS, "model", "explicit", "profiles")
@@ -387,7 +388,7 @@ def validate_xml(path, annex, C, gen):
         checked = [xsd_finding(C, e) for e in xsd.iter_errors(path)]
     schs = [("core-schematron", os.path.join(gen, "lote_core.sch"))]
     if annex:
-        schs.append((f"profile-{annex}", glob.glob(os.path.join(gen, "profiles", f"lote_profile_{annex}_*.sch"))[0]))
+        schs.append((f"profile-{annex}", glob.glob(os.path.join(PROFILES, f"lote_profile_{annex}_*.sch"))[0]))
     for layer, fn in schs:
         sch = isoschematron.Schematron(etree.parse(fn), store_report=True)
         sch.validate(doc)
@@ -498,7 +499,7 @@ def validate_json(path, annex, C, gen):
     core = json.load(open(core_fn, encoding="utf-8"))
     reg = Registry().with_resource("file://" + core_fn, Resource.from_contents(core))
     if annex:
-        fn = glob.glob(os.path.join(gen, "profiles", f"lote_profile_{annex}_*.json"))[0]
+        fn = glob.glob(os.path.join(PROFILES, f"lote_profile_{annex}_*.json"))[0]
         schema = {**json.load(open(fn, encoding="utf-8")), "$id": "file://" + fn}
     else:
         schema = {**core, "$id": "file://" + core_fn}

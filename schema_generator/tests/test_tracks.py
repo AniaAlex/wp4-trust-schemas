@@ -1,6 +1,6 @@
 """Tests of the two scheme tracks (clause 6.3.0, Table 1) against the three generated variants, in JSON and XML:
-  core      core/generated/       both kinds of list: Table 1 and the placement as rules (R-Table1, R-SchemeInfoPlacement)
-  explicit  explicit/generated/   Table 1 explicit column as structure
+  base      base/generated/       both kinds of list: Table 1 and the placement as rules (R-Table1, R-SchemeInfoPlacement)
+  explicit  explicit/generated/base/Table 1 explicit column as structure
   implicit  implicit/generated/   Table 1 implicit column as structure; the list information in ListAndSchemeInformation
                                   or directly in the list (6.3.0)
 
@@ -13,7 +13,7 @@ from lxml import etree, isoschematron
 
 from lote_schema_generator.paths import ROOT as _ROOT, HANDWRITTEN_CORE, HANDWRITTEN_PROFILES  # noqa: F401
 ROOT = pathlib.Path(_ROOT)
-VARIANTS = {"core": ROOT / "core" / "generated", "explicit": ROOT / "explicit" / "generated", "implicit": ROOT / "implicit" / "generated"}
+VARIANTS = {"base": ROOT / "base" / "generated", "explicit": ROOT / "explicit" / "generated" / "base", "implicit": ROOT / "implicit" / "generated"}
 NS = "http://uri.etsi.org/019602/v1#"
 COMMON = ["LoTEVersionIdentifier", "LoTESequenceNumber", "SchemeOperatorName", "ListIssueDateTime", "NextUpdate"]
 EXPLICIT_ONLY = ["LoTEType", "SchemeOperatorAddress", "SchemeName", "SchemeInformationURI", "StatusDeterminationApproach",
@@ -76,7 +76,7 @@ def lst(lsi=None, direct=None):
 
 
 V, I = "valid", "invalid"
-# (label, (lsi, direct), expected for core / explicit / implicit)
+# (label, (lsi, direct), expected for base / explicit / implicit)
 CASES = [
     ("explicit list (Table 1, explicit column)", (COMMON + EXPLICIT_ONLY, None), (V, V, I)),
     ("implicit list, ListAndSchemeInformation with the 5 common elements", (COMMON, None), (V, I, V)),

@@ -7,7 +7,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 from lote_schema_generator.paths import ROOT as _ROOT, HANDWRITTEN_CORE, HANDWRITTEN_PROFILES  # noqa: F401
 ROOT = pathlib.Path(_ROOT)
 # The same cases against the earlier hand-written core schema and the generated core (both kinds of list).
-SCHEMAS = {"handwritten": pathlib.Path(HANDWRITTEN_CORE), "generated": ROOT / "core" / "generated" / "lote_core.schema.json"}
+SCHEMAS = {"handwritten": pathlib.Path(HANDWRITTEN_CORE), "generated": ROOT / "base" / "generated" / "lote_core.schema.json"}
 _VALIDATORS = {}
 
 

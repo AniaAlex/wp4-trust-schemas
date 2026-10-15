@@ -9,7 +9,7 @@ from lote_schema_generator.paths import ROOT as _ROOT, HANDWRITTEN_CORE, HANDWRI
 ROOT = pathlib.Path(_ROOT)
 # Two variants, each a core schema with its profiles: the earlier hand-written ones and the generated ones (explicit track).
 VARIANTS = {"handwritten": (pathlib.Path(HANDWRITTEN_CORE), pathlib.Path(HANDWRITTEN_PROFILES)),
-            "generated": (ROOT / "explicit" / "generated" / "lote_core.schema.json", ROOT / "explicit" / "generated" / "profiles")}
+            "generated": (ROOT / "explicit" / "generated" / "base" / "lote_core.schema.json", ROOT / "explicit" / "generated" / "profiles")}
 E = "http://uri.etsi.org/19602/"
 ml = lambda v: [{"lang": "en", "value": v}]
 mu = lambda *us: [{"lang": "en", "uriValue": u} for u in us]

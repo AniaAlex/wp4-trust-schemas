@@ -2,7 +2,7 @@
 
 These defects in the text of ETSI TS 119 602 V1.1.1 were found while deriving JSON Schemas from it. Each entry gives the location, the exact text, the problem and a suggested correction.
 
-- **Source text:** [ts_119602v010101p.txt](../schema_generator/spec/ts_119602v010101p.txt), extracted from [ts_119602v010101p.pdf](../schema_generator/spec/ts_119602v010101p.pdf). Links like `L796` open the line.
+- **Source text:** [ts_119602v010101p.txt](spec/ts_119602v010101p.txt), extracted from [ts_119602v010101p.pdf](spec/ts_119602v010101p.pdf). Links like `L796` open the line.
 - **Found during:** the audit of the base schema (defects 1–12), the audit of the profile schemas (defects 13–16), the review of the Forge bindings (defects 17–18) and the review of implicit and explicit scheme information (defect 19).
 
 | # | Category | Location | Impact on implementations |
@@ -34,7 +34,7 @@ These defects in the text of ETSI TS 119 602 V1.1.1 were found while deriving JS
 
 ### 1. Registered URIs referred to as Annex H instead of Annex C
 
-**Location.** 6.1.2 ([L796](../schema_generator/spec/ts_119602v010101p.txt#L796), [L802](../schema_generator/spec/ts_119602v010101p.txt#L802)) and 6.3.3 ([L1071](../schema_generator/spec/ts_119602v010101p.txt#L1071)).
+**Location.** 6.1.2 ([L796](spec/ts_119602v010101p.txt#L796), [L802](spec/ts_119602v010101p.txt#L802)) and 6.3.3 ([L1071](spec/ts_119602v010101p.txt#L1071)).
 
 > "These common names are linked to their declaration in Annex H, which formally states all specific URIs used in the present document…"
 >
@@ -48,7 +48,7 @@ These defects in the text of ETSI TS 119 602 V1.1.1 were found while deriving JS
 
 ### 2. Multilingual rules referred to as Annex G instead of Annex B
 
-**Location.** 6.1.4 ([L820](../schema_generator/spec/ts_119602v010101p.txt#L820), [L851](../schema_generator/spec/ts_119602v010101p.txt#L851)).
+**Location.** 6.1.4 ([L820](spec/ts_119602v010101p.txt#L820), [L851](spec/ts_119602v010101p.txt#L851)).
 
 > "…using the 'en' language code as specified in IETF RFC 5646 [11] and Annex G."
 >
@@ -60,7 +60,7 @@ These defects in the text of ETSI TS 119 602 V1.1.1 were found while deriving JS
 
 ### 3. TE name referred to as clause 6.4.1 instead of 6.5.1
 
-**Location.** 6.6.3.0 ([L2157](../schema_generator/spec/ts_119602v010101p.txt#L2157)).
+**Location.** 6.6.3.0 ([L2157](spec/ts_119602v010101p.txt#L2157)).
 
 > "The value of that organizationName attribute should strictly match the 'TE Name' value (clause 6.4.1)."
 
@@ -70,7 +70,7 @@ These defects in the text of ETSI TS 119 602 V1.1.1 were found while deriving JS
 
 ### 4. Implicit scheme information without the component: where do the elements go?
 
-**Location.** 6.3.0 ([L901](../schema_generator/spec/ts_119602v010101p.txt#L901), [L912](../schema_generator/spec/ts_119602v010101p.txt#L912) vs [L970](../schema_generator/spec/ts_119602v010101p.txt#L970)).
+**Location.** 6.3.0 ([L901](spec/ts_119602v010101p.txt#L901), [L912](spec/ts_119602v010101p.txt#L912) vs [L970](spec/ts_119602v010101p.txt#L970)).
 
 > "In case the scheme information is implicit, the LoTE need not contain this component."
 >
@@ -80,7 +80,7 @@ versus the Semantics paragraph of the same clause:
 
 > "In case the scheme information is implicit, this component shall contain at least the LoTEVersionIdentifier, the LoTESequenceNumber, the SchemeOperatorName, the ListIssueDateTime, and the NextUpdate elements."
 
-**Reading.** The three sentences are consistent: an implicit list need not contain `ListAndSchemeInformation` (L901); without it, the five elements are provided "within the list directly" (L912); with it, the component contains at least those five (L970, which states the content of the component when present, not that it must be present). An earlier version of this entry read L970 as a contradiction; this project now follows the reading above (see [docs/model/README.md](../schema_generator/model/README.md), Tracks).
+**Reading.** The three sentences are consistent: an implicit list need not contain `ListAndSchemeInformation` (L901); without it, the five elements are provided "within the list directly" (L912); with it, the component contains at least those five (L970, which states the content of the component when present, not that it must be present). An earlier version of this entry read L970 as a contradiction; this project now follows the reading above (see [base/model/README.md](../schema_generator/base/model/README.md), Tracks).
 
 **Problem.** "Within the list directly" has no defined place:
 - The data model in clause 5 lists the components of a LoTE and has no slot for these elements outside `ListAndSchemeInformation`.
@@ -91,7 +91,7 @@ versus the Semantics paragraph of the same clause:
 
 ### 5. PKI-based service identity: certificate only, or certificate or SKI?
 
-**Location.** 6.6.0 ([L2076](../schema_generator/spec/ts_119602v010101p.txt#L2076)) vs 6.6.3.0 ([L2151](../schema_generator/spec/ts_119602v010101p.txt#L2151)).
+**Location.** 6.6.0 ([L2076](spec/ts_119602v010101p.txt#L2076)) vs 6.6.3.0 ([L2151](spec/ts_119602v010101p.txt#L2151)).
 
 > "When the listed service relies on PKI technology, the ServiceDigitalIdentity component shall contain at least one X509Certificate element."
 >
@@ -103,7 +103,7 @@ versus the Semantics paragraph of the same clause:
 
 ### 6. `PointerToOtherLoTE` vs `PointersToOtherLoTE`
 
-**Location.** 6.3.0 ([L964](../schema_generator/spec/ts_119602v010101p.txt#L964)) and Table 1 ([L1004](../schema_generator/spec/ts_119602v010101p.txt#L1004)) vs 6.3.13 ([L1380](../schema_generator/spec/ts_119602v010101p.txt#L1380)).
+**Location.** 6.3.0 ([L964](spec/ts_119602v010101p.txt#L964)) and Table 1 ([L1004](spec/ts_119602v010101p.txt#L1004)) vs 6.3.13 ([L1380](spec/ts_119602v010101p.txt#L1380)).
 
 > "The PointerToOtherLoTE component (see clause 6.3.13)."
 >
@@ -115,19 +115,19 @@ versus the Semantics paragraph of the same clause:
 
 ### 7. `ServiceSupplyPoint` vs `ServiceSupplyPoints`
 
-**Location.** 6.6.0 ([L2046](../schema_generator/spec/ts_119602v010101p.txt#L2046)) vs 6.6.7 ([L2298](../schema_generator/spec/ts_119602v010101p.txt#L2298)).
+**Location.** 6.6.0 ([L2046](spec/ts_119602v010101p.txt#L2046)) vs 6.6.7 ([L2298](spec/ts_119602v010101p.txt#L2298)).
 
 > "The ServiceSupplyPoint component (see clause 6.6.7)."
 >
 > "The ServiceSupplyPoints component specifies one or more URIs…"
 
-**Problem.** Two names for the same component. Table I.3 also uses the singular ("The ServiceSupplyPoint component shall contain the URI…", [L4046](../schema_generator/spec/ts_119602v010101p.txt#L4046)).
+**Problem.** Two names for the same component. Table I.3 also uses the singular ("The ServiceSupplyPoint component shall contain the URI…", [L4046](spec/ts_119602v010101p.txt#L4046)).
 
 **Suggested correction.** Use `ServiceSupplyPoints` throughout, including in Table I.3.
 
 ### 8. `ServiceDefinitionURI` vs `TEServiceDefinitionURI`
 
-**Location.** 6.6.0 ([L2048](../schema_generator/spec/ts_119602v010101p.txt#L2048)) vs 6.6.8 ([L2317](../schema_generator/spec/ts_119602v010101p.txt#L2317), [L2322](../schema_generator/spec/ts_119602v010101p.txt#L2322)).
+**Location.** 6.6.0 ([L2048](spec/ts_119602v010101p.txt#L2048)) vs 6.6.8 ([L2317](spec/ts_119602v010101p.txt#L2317), [L2322](spec/ts_119602v010101p.txt#L2322)).
 
 > "The ServiceDefinitionURI component (see clause 6.6.8)."
 >
@@ -139,7 +139,7 @@ versus the Semantics paragraph of the same clause:
 
 ### 9. Associated body component names
 
-**Location.** 6.5.5.1.1 ([L1846](../schema_generator/spec/ts_119602v010101p.txt#L1846)) vs 6.5.5.1.5 ([L1968](../schema_generator/spec/ts_119602v010101p.txt#L1968)), and 6.5.5.1.4 ([L1909](../schema_generator/spec/ts_119602v010101p.txt#L1909)–[L1918](../schema_generator/spec/ts_119602v010101p.txt#L1918)).
+**Location.** 6.5.5.1.1 ([L1846](spec/ts_119602v010101p.txt#L1846)) vs 6.5.5.1.5 ([L1968](spec/ts_119602v010101p.txt#L1968)), and 6.5.5.1.4 ([L1909](spec/ts_119602v010101p.txt#L1909)–[L1918](spec/ts_119602v010101p.txt#L1918)).
 
 > "The AssociatedBodyInformationURI element (see clause 6.5.5.1.5)."
 >
@@ -156,7 +156,7 @@ versus the Semantics paragraph of the same clause:
 
 ### 10. Subject key identifier clause is a copy of the public key clause
 
-**Location.** 6.6.3.4 ([L2210](../schema_generator/spec/ts_119602v010101p.txt#L2210)–[L2222](../schema_generator/spec/ts_119602v010101p.txt#L2222)).
+**Location.** 6.6.3.4 ([L2210](spec/ts_119602v010101p.txt#L2210)–[L2222](spec/ts_119602v010101p.txt#L2222)).
 
 > "6.6.3.4 Subject key identifier … Format: The format of the PublicKeyValue component is left open and is syntax-specific. Semantics: The value of the PublicKeyValue component shall be the same public key as the one present within any X509Certificate element listed in the parent ServiceDigitalIdentity component, if any."
 
@@ -169,7 +169,7 @@ versus the Semantics paragraph of the same clause:
 
 ### 11. Garbled sentence in the scheme information URI clause
 
-**Location.** 6.3.7 ([L1235](../schema_generator/spec/ts_119602v010101p.txt#L1235)).
+**Location.** 6.3.7 ([L1235](spec/ts_119602v010101p.txt#L1235)).
 
 > "This component may contain be zero or more URIs leading to archived versions of the list."
 
@@ -177,7 +177,7 @@ versus the Semantics paragraph of the same clause:
 
 ### 12. "Expired" status required but never defined
 
-**Location.** 6.3.15 ([L1462](../schema_generator/spec/ts_119602v010101p.txt#L1462)–[L1463](../schema_generator/spec/ts_119602v010101p.txt#L1463)).
+**Location.** 6.3.15 ([L1462](spec/ts_119602v010101p.txt#L1462)–[L1463](spec/ts_119602v010101p.txt#L1463)).
 
 > "If a scheme ceases operations or halts publication of its LoTE, a final version shall be published with all services' status shown as "expired" (see Service current status) and this field set null."
 
@@ -192,22 +192,22 @@ versus the Semantics paragraph of the same clause:
 
 ### 13. Typo in the WRPRC status determination approach URI
 
-**Location.** Table G.1 ([L3480](../schema_generator/spec/ts_119602v010101p.txt#L3480)) and Annex C.2.2 ([L2763](../schema_generator/spec/ts_119602v010101p.txt#L2763)).
+**Location.** Table G.1 ([L3480](spec/ts_119602v010101p.txt#L3480)) and Annex C.2.2 ([L2763](spec/ts_119602v010101p.txt#L2763)).
 
 > "The value of the StatusDeterminationApproach component shall be "http://uri.etsi.org/19602/WRPRCrovidersList/StatusDetn/EU"."
 
-**Problem.** "WRPRCrovidersList" is missing the "P" of "Providers". Every other URI follows the `…ProvidersList` pattern, including the WRPRC scheme rules URI in the same table ([L3482](../schema_generator/spec/ts_119602v010101p.txt#L3482)): `http://uri.etsi.org/19602/WRPRCProvidersList/schemerules/EU`. Because the typo appears in both places, implementers will split between the two spellings, and exact string matching will fail.
+**Problem.** "WRPRCrovidersList" is missing the "P" of "Providers". Every other URI follows the `…ProvidersList` pattern, including the WRPRC scheme rules URI in the same table ([L3482](spec/ts_119602v010101p.txt#L3482)): `http://uri.etsi.org/19602/WRPRCProvidersList/schemerules/EU`. Because the typo appears in both places, implementers will split between the two spellings, and exact string matching will fail.
 
 **Suggested correction.** `http://uri.etsi.org/19602/WRPRCProvidersList/StatusDetn/EU` in both Table G.1 and Annex C.2.2.
 
 ### 14. Country URI placed under TE address in Annex H only
 
-**Location.** Table H.2, TE address row ([L3749](../schema_generator/spec/ts_119602v010101p.txt#L3749)–[L3757](../schema_generator/spec/ts_119602v010101p.txt#L3757)).
+**Location.** Table H.2, TE address row ([L3749](spec/ts_119602v010101p.txt#L3749)–[L3757](spec/ts_119602v010101p.txt#L3757)).
 
 > "The TEAddress component shall contain: a) the postal address of the Pub-EAA provider; and b) the contact email and contact phone number … c) the URI "http://uri.etsi.org/19602/ListOfTrustedEntities/PubEAAProvider/CC" …"
 
 **Problem.**
-- In Annexes D, E, F, G and I the equivalent URI is item c) of the **TE information URI** row, e.g. D.2 [L2942](../schema_generator/spec/ts_119602v010101p.txt#L2942).
+- In Annexes D, E, F, G and I the equivalent URI is item c) of the **TE information URI** row, e.g. D.2 [L2942](spec/ts_119602v010101p.txt#L2942).
 - In H it sits under TE address, where the electronic address is meant for e-mail, web-site and phone contacts (clause 6.3.5.2).
 - Real Pub-EAA lists already put it under TE information URI, following the other annexes.
 
@@ -215,7 +215,7 @@ versus the Semantics paragraph of the same clause:
 
 ### 15. Missing closing quotation mark in a WRPAC service type
 
-**Location.** Table F.3 ([L3372](../schema_generator/spec/ts_119602v010101p.txt#L3372)).
+**Location.** Table F.3 ([L3372](spec/ts_119602v010101p.txt#L3372)).
 
 > "a) "http://uri.etsi.org/19602/SvcType/WRPAC/Issuance to indicate that the service is service under which wallet relying parties access certificates are issued;"
 
@@ -223,7 +223,7 @@ versus the Semantics paragraph of the same clause:
 
 ### 16. Service type descriptions copied from the WRPAC profile
 
-**Location.** Table G.3 ([L3573](../schema_generator/spec/ts_119602v010101p.txt#L3573), [L3576](../schema_generator/spec/ts_119602v010101p.txt#L3576)–[L3577](../schema_generator/spec/ts_119602v010101p.txt#L3577)) and Table H.3 ([L3788](../schema_generator/spec/ts_119602v010101p.txt#L3788)–[L3790](../schema_generator/spec/ts_119602v010101p.txt#L3790)).
+**Location.** Table G.3 ([L3573](spec/ts_119602v010101p.txt#L3573), [L3576](spec/ts_119602v010101p.txt#L3576)–[L3577](spec/ts_119602v010101p.txt#L3577)) and Table H.3 ([L3788](spec/ts_119602v010101p.txt#L3788)–[L3790](spec/ts_119602v010101p.txt#L3790)).
 
 > G.3: "…"http://uri.etsi.org/19602/SvcType/WRPRC/Issuance" to indicate that the service is service under which wallet relying parties access certificates are issued; b) "http://uri.etsi.org/19602/SvcType/WRPRC/Revocation" to indicate that the service is a service providing validity status information on wallet relying party access certificates."
 >
@@ -239,7 +239,7 @@ versus the Semantics paragraph of the same clause:
 
 ### 17. "Scheme explicit" is required but never defined, and implicit lists have no binding
 
-**Location.** Clause 3.1 ([L451](../schema_generator/spec/ts_119602v010101p.txt#L451)), clause 4.6 ([L556](../schema_generator/spec/ts_119602v010101p.txt#L556)–[L557](../schema_generator/spec/ts_119602v010101p.txt#L557)), clause 6.3.0 ([L895](../schema_generator/spec/ts_119602v010101p.txt#L895)–[L903](../schema_generator/spec/ts_119602v010101p.txt#L903), Table 1 [L988](../schema_generator/spec/ts_119602v010101p.txt#L988)), Annex A ([L2444](../schema_generator/spec/ts_119602v010101p.txt#L2444), [L2455](../schema_generator/spec/ts_119602v010101p.txt#L2455)–[L2456](../schema_generator/spec/ts_119602v010101p.txt#L2456)) and D.1 ([L2838](../schema_generator/spec/ts_119602v010101p.txt#L2838)), with the same sentence in E.1–I.1.
+**Location.** Clause 3.1 ([L451](spec/ts_119602v010101p.txt#L451)), clause 4.6 ([L556](spec/ts_119602v010101p.txt#L556)–[L557](spec/ts_119602v010101p.txt#L557)), clause 6.3.0 ([L895](spec/ts_119602v010101p.txt#L895)–[L903](spec/ts_119602v010101p.txt#L903), Table 1 [L988](spec/ts_119602v010101p.txt#L988)), Annex A ([L2444](spec/ts_119602v010101p.txt#L2444), [L2455](spec/ts_119602v010101p.txt#L2455)–[L2456](spec/ts_119602v010101p.txt#L2456)) and D.1 ([L2838](spec/ts_119602v010101p.txt#L2838)), with the same sentence in E.1–I.1.
 
 > 6.3.0: "Information about the scheme within which the LoTE is issued may be provided either implicitly or explicitly."
 >
@@ -266,7 +266,7 @@ versus the Semantics paragraph of the same clause:
 
 ### 18. The profiles require the Annex A JSON schema, which contradicts the text
 
-**Location.** Clause 6.6.3.1 ([L2166](../schema_generator/spec/ts_119602v010101p.txt#L2166)), Annex A.1 ([L2444](../schema_generator/spec/ts_119602v010101p.txt#L2444)–[L2449](../schema_generator/spec/ts_119602v010101p.txt#L2449)) and D.1 ([L2838](../schema_generator/spec/ts_119602v010101p.txt#L2838)), with the same sentence in E.1 ([L3041](../schema_generator/spec/ts_119602v010101p.txt#L3041)), F.1 ([L3246](../schema_generator/spec/ts_119602v010101p.txt#L3246)), G.1 ([L3445](../schema_generator/spec/ts_119602v010101p.txt#L3445)), H.1 ([L3646](../schema_generator/spec/ts_119602v010101p.txt#L3646)) and I.1 ([L3902](../schema_generator/spec/ts_119602v010101p.txt#L3902)).
+**Location.** Clause 6.6.3.1 ([L2166](spec/ts_119602v010101p.txt#L2166)), Annex A.1 ([L2444](spec/ts_119602v010101p.txt#L2444)–[L2449](spec/ts_119602v010101p.txt#L2449)) and D.1 ([L2838](spec/ts_119602v010101p.txt#L2838)), with the same sentence in E.1 ([L3041](spec/ts_119602v010101p.txt#L3041)), F.1 ([L3246](spec/ts_119602v010101p.txt#L3246)), G.1 ([L3445](spec/ts_119602v010101p.txt#L3445)), H.1 ([L3646](spec/ts_119602v010101p.txt#L3646)) and I.1 ([L3902](spec/ts_119602v010101p.txt#L3902)).
 
 > 6.6.3.1: "The X509Certificate component shall be a Base64 string."
 >
@@ -286,7 +286,7 @@ versus the Semantics paragraph of the same clause:
 
 ### 19. Explicit scheme information: the text lists six additional elements, Table 1 eight
 
-**Location.** 6.3.0, Semantics ([L981](../schema_generator/spec/ts_119602v010101p.txt#L981)–[L983](../schema_generator/spec/ts_119602v010101p.txt#L983)) vs Table 1 ([L988](../schema_generator/spec/ts_119602v010101p.txt#L988)–[L1010](../schema_generator/spec/ts_119602v010101p.txt#L1010), rows [L996](../schema_generator/spec/ts_119602v010101p.txt#L996) and [L997](../schema_generator/spec/ts_119602v010101p.txt#L997)). Related to defects 4 and 17.
+**Location.** 6.3.0, Semantics ([L981](spec/ts_119602v010101p.txt#L981)–[L983](spec/ts_119602v010101p.txt#L983)) vs Table 1 ([L988](spec/ts_119602v010101p.txt#L988)–[L1010](spec/ts_119602v010101p.txt#L1010), rows [L996](spec/ts_119602v010101p.txt#L996) and [L997](spec/ts_119602v010101p.txt#L997)). Related to defects 4 and 17.
 
 > Semantics: "In case the scheme information is explicit this component shall contain, in addition, LoTEType, the SchemeInformationURI, the StatusDeterminationApproach, the SchemeTypeCommunityRules, the SchemeTerritory, and the PolicyOrLegalNotice elements."
 
@@ -299,7 +299,7 @@ versus Table 1, which the next sentence says "summarizes the above requirements"
 
 **Problem.**
 - The Semantics paragraph makes **six** elements mandatory for explicit scheme information, in addition to the five that both kinds require. Table 1 marks **eight** as M in the explicit column: the same six plus `SchemeOperatorAddress` and `SchemeName`.
-- Table 1 is introduced as a summary of the text ("Table 1 summarizes the above requirements…", [L985](../schema_generator/spec/ts_119602v010101p.txt#L985)), yet it adds two requirements the text does not state. Nothing else in the text requires them either: the Format paragraph lists both among the optional sub-components ([L948](../schema_generator/spec/ts_119602v010101p.txt#L948), [L950](../schema_generator/spec/ts_119602v010101p.txt#L950)), and clauses 6.3.5 and 6.3.6 describe their content but not when they must be present.
+- Table 1 is introduced as a summary of the text ("Table 1 summarizes the above requirements…", [L985](spec/ts_119602v010101p.txt#L985)), yet it adds two requirements the text does not state. Nothing else in the text requires them either: the Format paragraph lists both among the optional sub-components ([L948](spec/ts_119602v010101p.txt#L948), [L950](spec/ts_119602v010101p.txt#L950)), and clauses 6.3.5 and 6.3.6 describe their content but not when they must be present.
 - So an explicit list without `SchemeOperatorAddress` or `SchemeName` is valid by the text and invalid by Table 1. The two readings give different validators: one requires 6 additional elements, the other 8.
 - `SchemeName` makes the gap sharper. Table 1 forbids it in implicit lists ("/"), so its mere presence makes a list explicit (see defect 17), but by the text an explicit list does not have to contain it.
 
@@ -309,7 +309,7 @@ versus Table 1, which the next sentence says "summarizes the above requirements"
 
 ### 20. The mandatory LoTE tag has no value, and the JSON binding no place for it
 
-**Location.** Clause 5 ([L580](../schema_generator/spec/ts_119602v010101p.txt#L580), [L585](../schema_generator/spec/ts_119602v010101p.txt#L585)), clause 6.2 ([L874](../schema_generator/spec/ts_119602v010101p.txt#L874)–[L882](../schema_generator/spec/ts_119602v010101p.txt#L882)), Annex C, Annex A.1 ([L2444](../schema_generator/spec/ts_119602v010101p.txt#L2444)–[L2449](../schema_generator/spec/ts_119602v010101p.txt#L2449)) and D.1–I.1.
+**Location.** Clause 5 ([L580](spec/ts_119602v010101p.txt#L580), [L585](spec/ts_119602v010101p.txt#L585)), clause 6.2 ([L874](spec/ts_119602v010101p.txt#L874)–[L882](spec/ts_119602v010101p.txt#L882)), Annex C, Annex A.1 ([L2444](spec/ts_119602v010101p.txt#L2444)–[L2449](spec/ts_119602v010101p.txt#L2449)) and D.1–I.1.
 
 > Clause 5: "There shall be only one occurrence of the first two and last components (i.e. 1., 2. and 6.)." — component 1: "A list of trusted entities tag (Tag): This tag facilitates the identification of the list of trusted entities during electronic searches. The contents of the tag are specified in clause 6.2."
 >

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """lote_check: check a LoTE schema (XSD or JSON Schema) against the requirements of ETSI TS 119 602.
 
-The requirements come from the model (model/lote_model.json, or --model): every component with its text names and
-verified quote (lote_schema_generator/sources.py), its expected name and occurrence per binding, and what is not bound.
+The requirements come from the model (base/model/lote_model.json, or --model): every component with its text names and
+verified quote, its expected name and occurrence per binding, and what is not bound.
 
     python tools/lote_check.py forge/1960201_xml_schema/*.xsd
     python tools/lote_check.py forge/1960201_json_schema/*.json --show-ok
@@ -190,8 +190,8 @@ def expectation(rec, binding):
 
 
 def requirements_from_model(model_path=DEFAULT_MODEL):
-    """The requirements in the form check() reads, derived from the model: one record per text component (its source in
-    sources.py), with the expected name and occurrence per binding, and the text's data types and rules as records that
+    """The requirements in the form check() reads, derived from the model: one record per text component (its 'source' in
+    the model), with the expected name and occurrence per binding, and the text's data types and rules as records that
     are listed as not checked. A component used in several places is checked at its home: the first place outside the
     root, where the direct placement of an implicit list (6.3.0) only copies it."""
     m = json.load(open(model_path, encoding="utf-8"))
@@ -235,26 +235,31 @@ def requirements_from_model(model_path=DEFAULT_MODEL):
 
 
 def SOURCE_INFO(m):
-    """Every source the model cites (sources.py, as the model resolved it), with its title and kind."""
-    from .sources import SOURCES
-    out = {}
+    """Every source the model cites, with a title (the part of its id after the clause) and a kind: 'component' where a
+    structure, component or extension cites it, else 'rule' where a constraint does, else 'datatype' (a value type)."""
+    out, kinds = {}, {}
 
-    def walk(o):
+    def walk(o, kind):
         if isinstance(o, dict):
             src = o.get("source")
-            if isinstance(src, dict) and src.get("id") in SOURCES and src["id"] not in out:
-                out[src["id"]] = {**src, "title": SOURCES[src["id"]]["title"], "kind": SOURCES[src["id"]]["kind"]}
-            for v in o.values():
-                walk(v)
+            if isinstance(src, dict) and src.get("id"):
+                out.setdefault(src["id"], {**src, "title": src["id"].split("/", 1)[-1]})
+                kinds.setdefault(src["id"], set()).add(kind)
+            for k, v in o.items():
+                walk(v, "rule" if k == "constraint" else kind)
         elif isinstance(o, list):
             for v in o:
-                walk(v)
-    walk(m)
+                walk(v, kind)
+    walk(m["value_types"], "datatype")
+    walk(m["structures"], "component")
+    walk(m["extensions"], "component")
+    for sid, ks in kinds.items():
+        out[sid]["kind"] = next(k for k in ("component", "rule", "datatype") if k in ks)
     return out
 
 
 def scheme_overrides(track):
-    """Table 1 column of a track (model/schemes/<track>.json): {(parent, name): 'required' | 'forbidden'}."""
+    """Table 1 column of a track (base/model/schemes/<track>.json): {(parent, name): 'required' | 'forbidden'}."""
     if not track:
         return {}
     diff = json.load(open(SCHEMES_DIR + f"{track}.json", encoding="utf-8"))
@@ -351,7 +356,7 @@ def check(inv, reqs, scheme=None):
 # ------------------------------------------------------------------ report
 def text_report(files, binding, findings, not_checked, show_ok):
     out = [f"LoTE schema check: {binding.upper()} | " + ", ".join(os.path.basename(f) for f in files),
-           "Requirements: ETSI TS 119 602 V1.1.1 (2025-11), from the model (model/lote_model.json)", ""]
+           "Requirements: ETSI TS 119 602 V1.1.1 (2025-11), from the model (base/model/lote_model.json)", ""]
     for sev in SEVERITY:
         items = [f for f in findings if f["status"] == sev]
         if not items or (sev == "OK" and not show_ok):
@@ -388,7 +393,7 @@ def main(argv=None):
     ap.add_argument("--json", action="store_true", help="print findings as JSON instead of text")
     ap.add_argument("--show-ok", action="store_true", help="also list components that match")
     ap.add_argument("--scheme", choices=["explicit", "implicit"],
-                    help="check a track's schema: apply its Table 1 column (model/schemes/<track>.json)")
+                    help="check a track's schema: apply its Table 1 column (base/model/schemes/<track>.json)")
     a = ap.parse_args(argv)
     exts = {os.path.splitext(f)[1].lower() for f in a.schemas}
     if exts not in ({".xsd"}, {".json"}):

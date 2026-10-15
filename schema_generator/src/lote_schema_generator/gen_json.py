@@ -1,9 +1,9 @@
-"""Generate the core LoTE JSON Schema (draft 2020-12) from the abstract model model/lote_model.json.
+"""Generate the core LoTE JSON Schema (draft 2020-12) from the abstract model base/model/lote_model.json.
 
 The model says WHAT the text requires (components, occurrence, value types, rules); this script holds HOW the JSON binding
 expresses it (the binding conventions below). Nothing component-specific is written here.
 
-    python gen_json.py                  # core/generated/lote_core.schema.json, names as the current core schema
+    python gen_json.py                  # base/generated/lote_core.schema.json, names as the current core schema
     python gen_json.py --names text     # use the text's names where a decision is pending
 
 JSON binding conventions:
@@ -20,12 +20,12 @@ JSON binding conventions:
 """
 import argparse, json, os
 
-from .build_schemes import allowed
-from .paths import CORE_GEN, MODEL, ROOT, SNAPSHOT, TRACK_GEN
+from .model import allowed
+from .paths import BASE_GEN, MODEL, ROOT, SNAPSHOT, TRACK_GEN
 
-OUT = CORE_GEN + "lote_core.schema.json"
-# --scheme: the core (both kinds of list) or one track, read from its snapshot (built by build_schemes.py)
-SCHEMES = {"core": (MODEL, OUT),
+OUT = BASE_GEN + "lote_core.schema.json"
+# --scheme: the base (both kinds of list) or one track, read from its snapshot (explicit|implicit/model/)
+SCHEMES = {"base": (MODEL, OUT),
            "explicit": (SNAPSHOT["explicit"], TRACK_GEN["explicit"] + "lote_core.schema.json"),
            "implicit": (SNAPSHOT["implicit"], TRACK_GEN["implicit"] + "lote_core.schema.json")}
 
@@ -120,7 +120,7 @@ def component_citation(m):
 
 # ------------------------------------------------------------------ generation
 class Gen:
-    def __init__(self, model, names, source="model/lote_model.json"):
+    def __init__(self, model, names, source="base/model/lote_model.json"):
         self.m, self.names, self.source = model, names, source
         self.vname, self.defs = value_defs(model)
         self.has_entry, self.en = has_entry(model)
@@ -277,8 +277,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--names", choices=["current", "text"], default="current",
                     help="where a naming decision is pending: keep the current core schema's name, or use the text's name")
-    ap.add_argument("--scheme", choices=list(SCHEMES), default="core",
-                    help="core: both kinds of list (Table 1 as a rule); explicit / implicit: one track (Table 1 column as structure)")
+    ap.add_argument("--scheme", choices=list(SCHEMES), default="base",
+                    help="base: both kinds of list (Table 1 as a rule); explicit / implicit: one track (Table 1 column as structure)")
     ap.add_argument("--out", help="output file (default: per --scheme)")
     a = ap.parse_args()
     model_path, a.out = SCHEMES[a.scheme][0], a.out or SCHEMES[a.scheme][1]

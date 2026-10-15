@@ -2,7 +2,7 @@
   "id": "lote-profile-H",
   "title": "ETSI TS 119 602 V1.1.1 Annex H - Pub-EAA providers list",
   "derivation": "constraint",
-  "baseDefinition": "model/schemes/explicit.json",
+  "baseDefinition": "base/model/schemes/explicit.json",
   "baseCitation": {
     "quote": "shall comply with either the scheme explicit XML schema definition",
     "page": 62,

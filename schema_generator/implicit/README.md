@@ -1,14 +1,16 @@
 # Implicit track: lists whose scheme is known out of band
 
+> **Frozen since 2026-10-15.** The implicit model no longer changes; its schemas are still generated and tested. See [project_decisions_vs_etsi.md #4](../../docs/project_decisions_vs_etsi.md#4-the-base-model-and-the-implicit-track-are-frozen-the-explicit-track-is-edited-directly).
+
 ETSI TS 119 602 V1.1.1, clause 6.3.0 and Table 1, implicit column. The scheme is known to all parties by other means, so the list carries only the minimum about itself: "Scheme information can be implicitly known when, for instance, it is provided through another means, or the context of the transactions itself within which the LoTE is consumed assumes a specific scheme known by all parties" (p. 15, L897). Typical use: closed communities, pilots, internal lists. No EU profile uses this track, and Annex A provides no ETSI binding for it; these schemas are this project's binding, as clause 4.6 allows ("Different bindings can be defined, for instance, for an implicit scheme information compared to an explicit scheme information").
 
-**Do not edit these files.** They are generated from the core model and the implicit differential; regenerate with the commands in [core/generated/README.md](../core/generated/README.md).
+The model in [model/](model/) is the core model with the implicit column of Table 1 applied, derived by [base/derive_tracks.py](../base/derive_tracks.py) before the freeze. **Do not edit it or [generated/](generated/).**
 
 ## Layout
 
-| Folder | Content | Built by |
+| Folder | Content | Made by |
 |---|---|---|
-| [model/lote_model_implicit.json](model/lote_model_implicit.json) | The full model of this track (a snapshot): the core model with [docs/model/schemes/implicit.json](../model/schemes/implicit.json) applied | [build_schemes.py](../src/lote_schema_generator/build_schemes.py) |
+| [model/lote_model_implicit.json](model/lote_model_implicit.json) | The full model of this track (a snapshot): the core model with [base/model/schemes/implicit.json](../base/model/schemes/implicit.json) applied | [derive_tracks.py](../base/derive_tracks.py), frozen |
 | [generated/](generated/) | `lote_core.schema.json` (JSON), `lote_core.xsd` + `lote_tie.xsd` + `lote_sie.xsd` (XML), `lote_core.sch` (Schematron) | [gen_json.py](../src/lote_schema_generator/gen_json.py), [gen_xsd.py](../src/lote_schema_generator/gen_xsd.py) `--scheme implicit` |
 
 ## Two forms of an implicit list

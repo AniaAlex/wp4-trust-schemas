@@ -1,8 +1,16 @@
 {
   "id": "lote-scheme-implicit",
+  "status": "frozen",
+  "frozen": {
+    "since": "2026-10-15",
+    "reason": "WP4 works with explicit lists only (docs/project_decisions_vs_etsi.md #4): the explicit track is edited directly in explicit/model/lote_model_explicit.json; this file is kept as reference and no longer changes.",
+    "allowed": "corrections of a misquoted or misplaced citation; nothing else",
+    "unfreeze_when": "ETSI publishes an implicit binding or an erratum to clause 6, or WP4 needs implicit lists",
+    "guard": "tests/test_frozen.py"
+  },
   "title": "Implicit scheme information: the scheme is known out of band (Table 1, implicit column)",
   "derivation": "constraint",
-  "baseDefinition": "model/lote_model.json",
+  "baseDefinition": "base/model/lote_model.json",
   "differential": {
     "element": [
       {
