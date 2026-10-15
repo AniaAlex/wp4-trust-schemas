@@ -2,6 +2,8 @@
 
 The tree of a scheme explicit List of Trusted Entities, as described by [model/lote_model_explicit.json](model/lote_model_explicit.json) (ETSI TS 119 602 V1.1.1, clause 6 with the explicit column of Table 1). Names are the text's names; the JSON and XML bindings may rename or wrap them (see the model's `json` / `xml` entries).
 
+How the model file encodes this tree (structures, components, value types) is explained in [terminology.md](terminology.md).
+
 Legend: `1` required · `0..1` optional · `1..n` one or more · `0..n` any number · ★ required by the explicit track (Table 1), optional in the base model · `(type)` value type · `→ X` see structure X below.
 
 ```

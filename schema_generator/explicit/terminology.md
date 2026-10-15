@@ -1,5 +1,70 @@
 # Terminology
 
+## Structures, components and value types
+
+The model ([model/lote_model_explicit.json](model/lote_model_explicit.json)) is built from three things. The tree they form, unfolded, is drawn in [explicit_schema.md](explicit_schema.md); this section explains how the file encodes it.
+
+| Term | What it is | In the file | Count |
+|---|---|---|---|
+| **structure** | an element that has parts: a box | a key under `"structures"`: `"SchemeOperatorAddress": { … }` | 16 |
+| **component** | a named part of a structure: a slot, with how often it occurs (`min` / `max`) | an entry in a structure's `"components"` list: `{"name": "SchemeOperatorAddress", …}` | 78 |
+| **value type** | the shape of a single value (a date, a URI, a code): a leaf | a key under `"value_types"`: `"country-code": { … }` | 23 |
+
+The text calls all of these "components"; the model separates *where* an element sits (component) from *what* it contains (structure or value type).
+
+### What a component holds
+
+A component holds exactly one of three things:
+
+| The component says | It holds | Count |
+|---|---|---|
+| `"value": "<value type>"` | a single value | 60 |
+| `"structure": "<structure>"` | one box of that structure | 10 |
+| `"items": {"structure": "<structure>", "min": 1, "max": "n"}` | a non-empty list of boxes of that structure | 8 |
+
+### Example: SchemeOperatorAddress
+
+The same name appears twice, in two roles:
+
+```json
+"ListAndSchemeInformation": {                               ← structure (line 1084)
+  "components": [
+    { "name": "SchemeOperatorAddress", "min": 1, "max": 1,  ← component: the slot (line 1198), required (★)
+      "structure": "SchemeOperatorAddress" }                ← reference to the structure below
+  ]
+},
+"SchemeOperatorAddress": {                                  ← structure: what the slot contains (line 1588)
+  "clause": "6.3.5.0", "content": "sequence",
+  "components": [
+    { "name": "PostalAddresses", "min": 1, "max": 1,
+      "items": { "structure": "PostalAddress", "min": 1, "max": "n" } },   ← a list of PostalAddress boxes
+    { "name": "ElectronicAddress", "min": 1, "max": 1,
+      "value": "electronic-address" }                                       ← a single value
+  ]
+},
+"PostalAddress": {                                          ← structure, shared with TEAddress and AssociatedBodyAddress
+  "components": [ { "name": "Country", "value": "country-code-a" }, … ]    ← ends in value types
+}
+```
+
+| The name appears as … | It is … |
+|---|---|
+| `"name": "X"` inside a `components` list | the **component** X (where it sits, how often) |
+| `"structure": "X"` or `"items": {"structure": "X"}` inside a component | a **reference** to the structure X |
+| a key directly under `"structures"`: `"X": { … }` | the **structure** X (what it contains) |
+
+A component and its structure often share a name (`SchemeOperatorAddress`, `ListAndSchemeInformation`, `TEAddress`: 10 cases). A list component is usually named in the plural (`PostalAddresses` → `PostalAddress`, `TrustedEntitiesList` → `TrustedEntity`). Some components use a shared structure under another name (`TEPostalAddress`, `AssociatedBodyPostalAddress` → `PostalAddress`).
+
+### Rules
+
+- **Defined once, referenced by name.** The file is flat: every structure sits directly under `"structures"` and is never written inside another one. The tree emerges from the references, starting at `"root": "LoTE"`.
+- **A referenced structure must exist.** A misspelt name stops the build.
+- **Sharing is allowed.** `PostalAddress` and `ServiceDigitalIdentity` are used by three components each.
+- **No loops.** No structure contains itself, directly or through others; every chain ends in value types. The model is a directed acyclic graph (DAG), not a tree.
+- **Two exceptions.** `LoTE` is a structure but no component: it is the root. `AssociatedBody` is held by no component: it is reached through the `OtherAssociatedBodies` extension.
+
+**Why flat.** A shared structure is changed in one place; each structure matches one clause of the text, which refers to definitions the same way ("formatted as specified in clause 6.6.3", 6.3.13 b); and each structure becomes one `$defs` entry in JSON Schema and one `complexType` in XSD.
+
 ## Content modes: how a structure combines its components
 
 Every structure in [model/lote_model_explicit.json](model/lote_model_explicit.json) has a `content` mode that says which of its components must or may appear together. There are three modes. Their names are taken from the schema languages: `sequence` and `choice` from XML Schema (XSD), `any-of` from JSON Schema (`anyOf`). The model uses them to describe the text without committing to either syntax.
