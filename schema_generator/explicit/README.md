@@ -25,6 +25,8 @@ The model in [model/](model/) is **the source of this track and is edited by han
 | `SchemeOperatorAddress`, `SchemeName` | required | Table 1 only (L996, L997); the Semantics paragraph omits them ([etsi_defects.md](../../docs/etsi_defects.md) #19) |
 | the five list elements directly in the list | not allowed | derived: the direct placement (L912) is only for a list without `ListAndSchemeInformation` |
 
+These components are **required** in this track, not optional. The Forge schemas mark some of them optional: the XSD has `minOccurs="0"` on `SchemeTypeCommunityRules`, `SchemeTerritory` and `PolicyOrLegalNotice`, and the JSON schema requires none of the components in the rows above except `ListAndSchemeInformation`. An explicit list must contain them all, so a list that passes Forge can still fail here. Forge repository: https://forge.etsi.org/rep/esi/x19_60201_lists_of_trusted_entities (the copy used here, with commit and date, is in [reference/forge/](../reference/forge/SOURCE.md)).
+
 Because these are structure here (required or absent elements), the core rules `R-Table1` and `R-SchemeInfoPlacement` are not needed: the snapshot lists them under `superseded`.
 
 ## Validate

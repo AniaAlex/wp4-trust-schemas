@@ -68,3 +68,38 @@ Since 2026-10-15 the project works on the explicit track only (see #3: every WP4
 - **Not published:** `lote-schemas publish` copies only the generator's `explicit/` directory into the validator. The validator validates every list as explicit: there is no `--implicit` and no guessing of the track, so a list without the scheme information fails with the Table 1 rules instead of passing as implicit.
 - **Consequence:** the explicit model will drift from the base model. Its `scheme` entries still record what Table 1 changes, but a later change in the explicit model is not reflected in the base model or the implicit track.
 - **Unfreeze when:** ETSI publishes an implicit binding or an erratum to clause 6, or WP4 needs implicit lists. Then carry the explicit changes made since the freeze back into the base model (or the explicit differential), set the status back, and put `derive_tracks.py` back into the build.
+
+## Open decisions
+
+### A. Digital identities in JSON: Forge objects or the text's strings; JWK and DID
+
+`ServiceDigitalIdentity` "may contain" X509Certificate, X509SubjectName, PublicKeyValue, X509SKI and OtherId elements (6.6.3.0, p. 33–34). In JSON, the text and Forge disagree on two of them:
+
+| Component | Text | Forge JSON | Project now |
+|---|---|---|---|
+| `X509Certificate` | "shall be a Base64 string" (6.6.3.1, p. 34, line 2166) | an object `pkiOb`: `{"val": <Base64>, "encoding": <URI>, "specRef": <string>}`, only `val` required | array of Base64 strings (the text) |
+| `PublicKeyValue` | "left open and is syntax-specific" (6.6.3.3, p. 34, line 2197) | a JWK ([rfc7517.json](../schema_generator/reference/forge/1960201_json_schema/rfcs/rfc7517.json)) | open: any value |
+
+**1. `X509Certificates`: `{"val": …}` objects or plain strings?** The text gives a Base64 string; Forge wraps it in an object, so a list built from the Forge schema (`[{"val": "MIIC…"}]`) fails the project's schema, and a list built from the text (`["MIIC…"]`) fails Forge. Options: keep the text's form; switch to Forge's form; or accept both (`oneOf`) until ETSI resolves it.
+
+**2. `PublicKeyValues`: adopt Forge's JWK?** JWK is the natural form for keys in JSON, and is the key format of OpenID Federation. If adopted, Forge's JWK must be corrected, because it rejects valid keys ([errors.md](../schema_generator/reference/forge/errors.md)): RFC 7517 §4.3 defines `key_ops` as an array of unique strings, while Forge declares a single string. The corrected definition:
+
+```json
+"key_ops": {
+  "type": "array",
+  "items": { "type": "string", "enum": ["sign", "verify", "encrypt", "decrypt", "wrapKey", "unwrapKey", "deriveKey", "deriveBits"] },
+  "uniqueItems": true
+}
+```
+
+Forge's `kty` enum (`EC`, `RSA`, `oct`) also omits `OKP` (RFC 8037: Ed25519), which some wallet ecosystems use.
+
+**3. Identities other than X.509.** Ecosystems that do not use PKI certificates identify an entity by a key or an identifier:
+
+| Ecosystem | Identity | Where it fits in the text |
+|---|---|---|
+| OpenID Federation | JWK (or an entity identifier URL) | `PublicKeyValue` (JWK); `OtherId` (URL) |
+| Decentralised identifiers | DID (`did:web:…`, `did:key:…`) | `OtherId`, whose "format is left open" (6.6.3.5, p. 35, line 2231) |
+
+The text already allows both: the PKI rule "this component shall contain at least: one X509Certificate element or an X509SKI element" applies only "When using PKI public-key technology" (6.6.3.0, p. 34, line 2151). To decide: whether `OtherId` stays an open string, or takes a typed form that says which kind of identifier it is (e.g. a DID pattern, or an object with a type URI), so that a validator can check it.
+

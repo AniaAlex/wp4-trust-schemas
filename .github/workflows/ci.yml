@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.13"]   # lowest supported (requires-python) and current
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            schema_generator/pyproject.toml
+            schema_validator/pyproject.toml
+
+      - name: Install both packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "schema_generator[dev]" -e "schema_validator[dev]"
+
+      - name: Lint (ruff)
+        run: ruff check schema_generator schema_validator
+
+      - name: Generated schemas are current
+        # A rebuild must reproduce the committed schemas, in the generator and in the validator's copy.
+        working-directory: schema_generator
+        run: |
+          lote-schemas build --publish
+          git diff --exit-code -- . ../schema_validator/src/lote_schema_validator/schemas \
+            || { echo "::error::Generated schemas are out of date: run 'lote-schemas build --publish' and commit the result."; exit 1; }
+
+      - name: Test generator
+        working-directory: schema_generator
+        run: pytest
+
+      - name: Test validator
+        working-directory: schema_validator
+        run: pytest
