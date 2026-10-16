@@ -48,3 +48,12 @@ def test_publish(tmp_path):
         assert any(str(p).startswith(f) for p in got), f
     assert not any(str(p).startswith(("implicit", "model", "base")) for p in got)    # frozen tracks are not published
     assert not any(p.suffix == ".md" for p in got)                                     # docs stay in the generator
+
+
+@pytest.mark.parametrize("out", OUTPUTS)
+def test_generated_json_is_ascii(out):
+    """Generated JSON is ASCII only: characters such as the tag and private-use ranges of PlainText (Annex B.2) are
+    written as escapes, so no invisible character sits in a file (GitHub flags them as hidden Unicode)."""
+    for f in sorted((Path(ROOT) / out).rglob("*.json")):
+        text = f.read_text(encoding="utf-8")
+        assert text.isascii(), f"{f.relative_to(Path(ROOT))}: non-ASCII at offset {next(i for i, c in enumerate(text) if ord(c) > 127)}"

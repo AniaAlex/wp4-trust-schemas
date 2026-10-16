@@ -372,7 +372,7 @@ def main():
             "properties": js.root["properties"],
         }
         with open(OUT + base + ".json", "w", encoding="utf-8") as f:
-            json.dump(schema, f, indent=2, ensure_ascii=False); f.write("\n")
+            json.dump(schema, f, indent=2, ensure_ascii=True); f.write("\n")  # ASCII only: no invisible characters in the file (PlainText's ranges)
         with open(OUT + base + ".sch", "w", encoding="utf-8") as f:
             f.write(sch.text(ov["title"], business))
         print(f"Annex {letter}: {base}.json, {base}.sch ({len(sch.rules)} assertions, {len(business)} rules-layer items)")

@@ -912,7 +912,7 @@
       "description": "Non-empty string without control, private-use or tag characters and without a UCS signature (Annex B.2). Clause B.2, p. 42: \"control characters such as TAB, CR, LF shall not be present\"",
       "type": "string",
       "minLength": 1,
-      "pattern": "^(?!\\uFEFF)[^\\u0000-\\u001F\\u007F-\\u009F\\uE000-\\uF8FF󠀀-󠁿󰀀-􏿿]+$"
+      "pattern": "^(?!\\uFEFF)[^\\u0000-\\u001F\\u007F-\\u009F\\uE000-\\uF8FF\udb40\udc00-\udb40\udc7f\udb80\udc00-\udbff\udfff]+$"
     },
     "LanguageTag": {
       "description": "IETF RFC 5646 tag, primary subtag in lower case (interpretation 5). Clause 6.1.4, p. 14: \"Each multilingual character string shall consist of two parts: a tag, conformant to IETF RFC 5646 [11] and in lower case\"",

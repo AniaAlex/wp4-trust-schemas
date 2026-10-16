@@ -286,7 +286,7 @@ def main():
     schema = Gen(model, a.names, os.path.relpath(model_path, ROOT)).build()
     os.makedirs(os.path.dirname(a.out), exist_ok=True)
     with open(a.out, "w", encoding="utf-8") as f:
-        json.dump(schema, f, indent=2, ensure_ascii=False); f.write("\n")
+        json.dump(schema, f, indent=2, ensure_ascii=True); f.write("\n")  # ASCII only: no invisible characters in the file (PlainText's ranges)
     print(f"wrote {a.out}: {len(schema['$defs'])} definitions")
 
 
