@@ -1,0 +1,73 @@
+{
+  "LoTE": {
+    "ListAndSchemeInformation": {
+      "LoTEVersionIdentifier": 1,
+      "LoTESequenceNumber": 1,
+      "LoTEType": "http://uri.etsi.org/19602/LoTEType/EUPubEAAProvidersList",
+      "SchemeOperatorName": [
+        {
+          "lang": "en",
+          "value": "WP4Trust Registry"
+        }
+      ],
+      "SchemeName": [
+        {
+          "lang": "en",
+          "value": "EU Trusted Entities List"
+        }
+      ],
+      "SchemeTerritory": "EU",
+      "ListIssueDateTime": "2026-10-16T11:29:00Z",
+      "NextUpdate": "2027-04-14T11:29:00Z",
+      "DistributionPoints": [
+        "http://localhost/lote/pubeaa_providers/pubeaa_providers.json"
+      ]
+    },
+    "TrustedEntitiesList": [
+      {
+        "TrustedEntityInformation": {
+          "TEName": [
+            {
+              "lang": "en",
+              "value": "Test University EAA Issuer"
+            }
+          ],
+          "TEAddress": {
+            "TEPostalAddress": [],
+            "TEElectronicAddress": []
+          },
+          "TEInformationURI": [
+            {
+              "lang": "en",
+              "uriValue": "https://eaa.test-university.example.se"
+            }
+          ]
+        },
+        "TrustedEntityServices": [
+          {
+            "ServiceInformation": {
+              "ServiceName": [
+                {
+                  "lang": "en",
+                  "value": "Test University EAA Issuer"
+                }
+              ],
+              "ServiceDigitalIdentity": {
+                "X509Certificates": [
+                  {
+                    "val": "MIICTTCCAfSgAwIBAgIUJFTHbFxqmh2Z60BKK+ZEJ/8QuB8wCgYIKoZIzj0EAwIwdjELMAkGA1UEBhMCU0UxIzAhBgNVBAoMGlRlc3QgVW5pdmVyc2l0eSBFQUEgSXNzdWVyMScwJQYDVQQDDB5lYWEudGVzdC11bml2ZXJzaXR5LmV4YW1wbGUuc2UxGTAXBgNVBGEMEExFSVhHLVRFU1RVTklWMDEwHhcNMjYwNjA0MTIzODI3WhcNMjgwNjAzMTIzODI3WjB2MQswCQYDVQQGEwJTRTEjMCEGA1UECgwaVGVzdCBVbml2ZXJzaXR5IEVBQSBJc3N1ZXIxJzAlBgNVBAMMHmVhYS50ZXN0LXVuaXZlcnNpdHkuZXhhbXBsZS5zZTEZMBcGA1UEYQwQTEVJWEctVEVTVFVOSVYwMTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABC8UY4eJkOKRbrrqLgN0gsNtdYW94G/ik1m92xHE3RCg4amMJL9Q2jDm+HWkS8GYo/PeViJRFmQ87IOaBiAljtWjYDBeMB0GA1UdDgQWBBSEJ1oFH8kzXAzmkgJ5sbm4ctRssjAfBgNVHSMEGDAWgBSEJ1oFH8kzXAzmkgJ5sbm4ctRssjAMBgNVHRMBAf8EAjAAMA4GA1UdDwEB/wQEAwIHgDAKBggqhkjOPQQDAgNHADBEAiB/A01hvFb0rO1IeZnurYwH5+OVVwHJwAgy4MVH5/UuNAIgMq3oDlz5zBXnAGF2fbcOJ66KwsBA+v+p45TT3RotMMo="
+                  }
+                ],
+                "X509SubjectNames": [
+                  "2.5.4.97=LEIXG-TESTUNIV01,CN=eaa.test-university.example.se,O=Test University EAA Issuer,C=SE"
+                ]
+              },
+              "ServiceTypeIdentifier": "http://uri.etsi.org/19602/SvcType/PubEAAProvider",
+              "ServiceStatus": "http://uri.etsi.org/19602/PubEAAProvidersList/SvcStatus/notified"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

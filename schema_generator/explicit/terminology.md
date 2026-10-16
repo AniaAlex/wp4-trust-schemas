@@ -204,7 +204,7 @@ Each element of `differential.element`:
 | `acceptAlso` | an extra accepted value next to the fixed one (Annex G's misspelt `WRPRCrovidersList` URI) | rare | project |
 | `binding` | `strength: "required"` and a `valueSet` (inline list of values): the value must be one of them | only if restricted | FHIR (inline list, not a ValueSet URL) |
 | `constraint` | conditions on the component (see below) | only if any | FHIR |
-| `json` / `xml` | a rule for one binding only (`min`, `max`, `name`), with `from` and a `citation`, `reason` or `note` | rare (`Signature`) | project |
+| `json` / `xml` | a rule for one binding only (`min`, `max`, `name`), with `from` and a `citation`, `reason` or `note`; `xml` may hold a `constraint` list: rules on the XML element itself, each with an `xpath` (the H.4 signature checks) | rare (`Signature`) | project |
 | `validation`, `validated_by` | `not-schema-based`: checked by code (the signature layer), not by the schemas | rare (`Signature`) | project |
 | `comment` | explanation, e.g. for a derived rule | optional | FHIR |
 
@@ -218,5 +218,8 @@ Each entry of `constraint`:
 | `expression` | the rule in FHIRPath; `null` when no schema can check it | FHIR `constraint.expression` |
 | `checkable` | `yes` / `partly` / `no`, with the reason | project |
 | `check` | the rule in a structured form the generator translates to JSON Schema and XPath: `contains`, `min-items`, `months-after` | project |
+| `xpath` | the rule as an XPath 1.0 test from the constrained element; only in an `xml.constraint` (XML only) | FHIR R4 `constraint.xpath` |
+| `row`, `citation` | the constraint's own annex row and sentence, when it is not the element's (e.g. `D-sig-ref-uri` cites H.4) | project |
+| `from`, `reason` | `text`, or `wp4` with the reason: a WP4 rule, not the annex's (its message starts with "WP4 rule") | project |
 
 FHIR's definitions: [ElementDefinition.constraint](https://hl7.org/fhir/R4/elementdefinition-definitions.html#ElementDefinition.constraint) (R4).

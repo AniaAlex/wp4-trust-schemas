@@ -117,4 +117,19 @@
       <sch:assert id="H-Signature-xml-required" test="ds:Signature">[H-Signature-xml-required] Signature is required in XML. H.4 Signature (p. 66, line 3858): "When an XML binding is used to issue the Pub-EAA providers list, the Signature component shall be present with a"</sch:assert>
     </sch:rule>
   </sch:pattern>
+  <sch:pattern id="p-H-sig-ref-uri">
+    <sch:rule context="/lote:ListOfTrustedEntities/ds:Signature">
+      <sch:assert id="H-sig-ref-uri" test="ds:SignedInfo/ds:Reference[@URI='']">[H-sig-ref-uri] ds:SignedInfo has a ds:Reference with URI="" (the entire document). H.4 Signature (p. 66, line 3863): "Its ds:SignedInfo element shall contain a ds:Reference element with the URI attribute set to an"</sch:assert>
+    </sch:rule>
+  </sch:pattern>
+  <sch:pattern id="p-H-sig-transforms">
+    <sch:rule context="/lote:ListOfTrustedEntities/ds:Signature">
+      <sch:assert id="H-sig-transforms" test="not(ds:SignedInfo/ds:Reference[@URI='']) or ds:SignedInfo/ds:Reference[@URI=''][count(ds:Transforms)=1][count(ds:Transforms/ds:Transform)=2][ds:Transforms/ds:Transform[1]/@Algorithm='http://www.w3.org/2000/09/xmldsig#enveloped-signature'][ds:Transforms/ds:Transform[2]/@Algorithm='http://www.w3.org/2001/10/xml-exc-c14n#']">[H-sig-transforms] The ds:Reference with URI="" has one ds:Transforms with two ds:Transform: enveloped-signature, then exclusive canonicalization. H.4 Signature (p. 66, line 3869): "This ds:Transforms element shall contain two ds:Transform elements."</sch:assert>
+    </sch:rule>
+  </sch:pattern>
+  <sch:pattern id="p-H-sig-c14n">
+    <sch:rule context="/lote:ListOfTrustedEntities/ds:Signature">
+      <sch:assert id="H-sig-c14n" test="ds:SignedInfo/ds:CanonicalizationMethod/@Algorithm='http://www.w3.org/2001/10/xml-exc-c14n#'">[H-sig-c14n] ds:SignedInfo is canonicalized with exclusive canonicalization. H.4 Signature (p. 66, line 3875): "ds:CanonicalizationMethod shall be "http://www.w3.org/2001/10/xml-exc-c14n#"."</sch:assert>
+    </sch:rule>
+  </sch:pattern>
 </sch:schema>

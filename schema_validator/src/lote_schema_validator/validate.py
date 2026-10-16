@@ -2,7 +2,8 @@
 sentence of ETSI TS 119 602 it breaks: rule id, location in the list, clause or annex row, page, line and quote.
 
     lote-validate list.xml --profile D       # explicit track + Annex D (PID providers)
-    lote-validate list.json                  # explicit track (Table 1, explicit column); --explicit says the same
+    lote-validate list.json                  # explicit track + the profile the list's LoTEType names, if any
+    lote-validate list.json --no-profile     # explicit track only (Table 1, explicit column)
     lote-validate list.xml --profile D --json > report.json
 
     from lote_schema_validator import validate
@@ -12,6 +13,10 @@ Schemas: the package data in schemas/explicit/ (the generator's explicit/ direct
 or LOTE_SCHEMAS_DIR. Every list is validated as a scheme explicit list (clause 6.3.0, Table 1, explicit column): WP4
 lists are explicit, and the implicit track is frozen and not published (docs/project_decisions_vs_etsi.md #3, #4). A
 list without the scheme information therefore fails with the Table 1 rules (EXP-SchemeName-required, ...).
+
+Profile: --profile applies an annex; without it, the annex whose fixed LoTEType (Table x.1) the list declares is applied,
+and a list whose LoTEType names no annex is checked against the track only (--no-profile forces that). When --profile
+differs from the annex the list declares, the report starts with a warning that names the declared annex.
 
 Layers, in order:
   XML   the track's XSD (lote_core.xsd), its Schematron (lote_core.sch), profile Schematron (generated/profiles/*.sch)
@@ -43,7 +48,9 @@ TRACKS = {"explicit": {"gen": os.path.join(EXPLICIT, "generated", "base"),
                        "model": os.path.join(EXPLICIT, "model", "lote_model_explicit.json")}}
 PROFILES = os.path.join(EXPLICIT, "generated", "profiles")  # the profile schemas
 OVERLAYS = os.path.join(EXPLICIT, "model", "profiles")      # the profile overlays (rule citations)
+LOTETYPE = "LoTE.ListAndSchemeInformation.LoTEType"         # the overlay path whose fixedUri names the annex
 SVRL = {"svrl": "http://purl.oclc.org/dsdl/svrl"}
+PREFIX = {"http://www.w3.org/2000/09/xmldsig#": "ds"}       # prefixes in reported locations; other namespaces are lote:
 CORE_SCH_CLAUSE = {"LanguageTagCase": "6.1.4", "CountryCodeExclusions": "6.1.5", "ElectronicAddressContent": "6.3.5.2"}
 
 
@@ -117,7 +124,7 @@ class Citations:
         for fn in glob.glob(os.path.join(OVERLAYS, "*.json")):
             for e in json.load(open(fn, encoding="utf-8"))["differential"]["element"]:
                 self.profile_rules[e["id"]] = (e, None)
-                for c in e.get("constraint", []):
+                for c in e.get("constraint", []) + (e.get("xml") or {}).get("constraint", []):
                     self.profile_rules[c["key"]] = (e, c)
                 for what in ("required", "prohibited", "fixed", "values", "xml-required", "xml-prohibited",
                              "json-required", "json-prohibited"):
@@ -130,9 +137,12 @@ class Citations:
         return {"ref": ref, "page": cite.get("page"), "line": cite.get("line"), "quote": cite.get("quote")}
 
     def profile(self, rule_id):
-        e, _ = self.profile_rules.get(rule_id, (None, None))
+        e, c = self.profile_rules.get(rule_id, (None, None))
         if not e:
             return {}
+        if c and c.get("citation"):                       # a constraint with its own sentence (e.g. H.4 2) for D-sig-ref-uri)
+            src = self.fmt(c.get("row", e["row"]), c["citation"])
+            return {**src, "from": "wp4"} if c.get("from") == "wp4" else src
         for bnd in ("xml", "json"):                       # a rule of one binding cites that binding's quote
             if f"-{bnd}-" in rule_id and (e.get(bnd) or {}).get("citation"):
                 return self.fmt(e["row"], e[bnd]["citation"])
@@ -400,7 +410,8 @@ def validate_xml(path, annex, C, gen):
                     text = re.sub(r"^\[[^\]]+\]\s*", "", text).split(". " + src.get("ref", "\0"))[0]
                 else:
                     src = C.core_rule(rule_id)
-                loc = re.sub(r"\*\[local-name\(\)='(\w+)' and namespace-uri\(\)='[^']*'\]", r"lote:\1", node.get("location") or "")
+                loc = re.sub(r"\*\[local-name\(\)='(\w+)' and namespace-uri\(\)='([^']*)'\]",
+                             lambda m: f"{PREFIX.get(m[2], 'lote')}:{m[1]}", node.get("location") or "")
                 checked.append(Finding(layer, rule_id, loc, text, src))
     if corrected:
         for f in checked:
@@ -528,13 +539,42 @@ def validate_json(path, annex, C, gen):
     return out
 
 
+# ------------------------------------------------------------------ profile: which annex the list declares
+def annex_types():
+    """LoTEType URI -> annex letter, from the fixed LoTEType of each overlay (Tables D.1-I.1)."""
+    out = {}
+    for fn in sorted(glob.glob(os.path.join(OVERLAYS, "*.json"))):
+        for e in json.load(open(fn, encoding="utf-8"))["differential"]["element"]:
+            if e.get("path") == LOTETYPE and e.get("fixedUri"):
+                out[e["fixedUri"]] = e["id"].split("-")[0]
+    return out
+
+
+def declared_lote_type(path, is_xml):
+    """The list's LoTEType, or None. XML is matched by local name, so a list with a wrong root or namespace still
+    declares its annex; a list that cannot be read declares none (the validation reports why)."""
+    try:
+        if is_xml:
+            from lxml import etree
+            root = etree.parse(path, etree.XMLParser(resolve_entities=False, no_network=True)).getroot()
+            v = root.xpath("string(*[local-name()='ListAndSchemeInformation']/*[local-name()='LoTEType'])")
+        else:
+            v = next(iter(get_path(json.load(open(path, encoding="utf-8")), LOTETYPE)), None)
+    except Exception:
+        return None
+    return v.strip() if isinstance(v, str) and v.strip() else None
+
+
 # ------------------------------------------------------------------ report
-def text_report(path, annex, findings, track="", why="", root_corrected=False):
-    lines = [f"{path}: {track} track ({why}){', profile ' + annex if annex else ''} - "
-             + (f"{len(findings)} failure(s)" if findings else "valid")]
-    if root_corrected:
+def text_report(r):
+    lines = [f"{r.path}: {r.track} track ({r.track_reason}), "
+             + (f"profile {r.profile} ({r.profile_reason})" if r.profile else f"no profile ({r.profile_reason})")
+             + " - " + (f"{len(r.findings)} failure(s)" if r.findings else "valid")]
+    lines += [f"WARNING: {w}" for w in r.warnings]
+    if r.root_corrected:
         lines.append("The root element is not the LoTE root (see LoTE-root); the rest of the list was checked as if it "
                      "were, so the findings below cover the whole list.")
+    findings = r.findings
     counts = {}
     for f in findings:
         counts.setdefault((f.layer, f.rule, f.source.get("ref")), [0, f.source])[0] += 1
@@ -559,9 +599,12 @@ class Report:
     path: str
     track: str                                            # always "explicit"
     track_reason: str                                     # why: the flag, the profile, or the default
-    profile: str = None                                   # annex letter, or None
+    profile: str = None                                   # annex letter applied, or None
     findings: list = field(default_factory=list)          # [Finding]
     root_corrected: bool = False                          # wrong root: the rest was checked as if the root were right
+    profile_reason: str = ""                              # why: --profile, the list's LoTEType, or why none
+    declared_profile: str = None                          # the annex the list's LoTEType names, or None
+    warnings: list = field(default_factory=list)          # [str], e.g. --profile differs from the declared annex
 
     @property
     def valid(self):
@@ -569,42 +612,62 @@ class Report:
 
     def to_dict(self):
         return {"track": self.track, "track_reason": self.track_reason, "profile": self.profile,
-                "root_corrected": self.root_corrected, "findings": [asdict(f) for f in self.findings]}
+                "profile_reason": self.profile_reason, "declared_profile": self.declared_profile,
+                "warnings": self.warnings, "root_corrected": self.root_corrected,
+                "findings": [asdict(f) for f in self.findings]}
 
 
 def validate(path, profile=None, track=None):
-    """Validate the list at path as a scheme explicit list. profile: an annex letter D-I; track: "explicit" or None (the
-    same: the explicit track is the only one published, see docs/project_decisions_vs_etsi.md #4)."""
+    """Validate the list at path as a scheme explicit list. profile: an annex letter D-I, None for the annex the list's
+    LoTEType names (if any), or False for none; track: "explicit" or None (the same: the explicit track is the only one
+    published, see docs/project_decisions_vs_etsi.md #4)."""
     path = str(path)
     if track not in (None, "explicit"):
         raise ValueError(f"track {track!r} is not supported: only the explicit track is published (the implicit track is "
                          "frozen, docs/project_decisions_vs_etsi.md #4)")
     with open(path, "rb") as fh:
         is_xml = fh.read(512).lstrip(b"\xef\xbb\xbf \t\r\n").startswith(b"<")
+    lote_type = declared_lote_type(path, is_xml)
+    declared = annex_types().get(lote_type)
+    warnings = []
+    if profile:
+        profile_why = f"--profile {profile}"
+        if declared and declared != profile:
+            warnings.append(f"The list declares LoTEType {lote_type} (Annex {declared}) but was checked against profile "
+                            f"{profile}. Did you mean --profile {declared}?")
+    elif profile is False:
+        profile, profile_why = None, "--no-profile"
+    else:
+        profile = declared
+        profile_why = (f"from its LoTEType {lote_type}" if declared else
+                       f"its LoTEType {lote_type} names no annex" if lote_type else "it has no LoTEType")
     tr = "explicit"
-    why = (f"--profile {profile}: D.1-I.1 require a scheme explicit list" if profile else
+    why = (f"profile {profile}: D.1-I.1 require a scheme explicit list" if profile else
            "--explicit" if track == "explicit" else "default: only the explicit track is published")
     C = Citations(tr)
     gen = TRACKS[tr]["gen"]
     findings, corrected = validate_xml(path, profile, C, gen) if is_xml else (validate_json(path, profile, C, gen), False)
-    return Report(path, tr, why, profile, findings, corrected)
+    return Report(path, tr, why, profile, findings, corrected, profile_why, declared, warnings)
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="lote-validate", description=__doc__.splitlines()[0])
     ap.add_argument("list", help="the LoTE to validate (.xml or .json)")
-    ap.add_argument("--profile", choices=list("DEFGHI"), help="annex profile to apply")
+    which = ap.add_mutually_exclusive_group()
+    which.add_argument("--profile", choices=list("DEFGHI"),
+                       help="annex profile to apply (default: the annex the list's LoTEType names, if any)")
+    which.add_argument("--no-profile", action="store_true", help="apply no annex profile, only the explicit track")
     ap.add_argument("--explicit", action="store_true",
                     help="validate as a scheme-explicit list (Table 1, explicit column); the default and only track")
     ap.add_argument("--json", action="store_true", help="print the findings as JSON")
     a = ap.parse_args(argv)
     if not os.path.isfile(a.list):
         ap.error(f"no such file: {a.list}")
-    r = validate(a.list, a.profile, "explicit" if a.explicit else None)
+    r = validate(a.list, False if a.no_profile else a.profile, "explicit" if a.explicit else None)
     if a.json:
         print(json.dumps(r.to_dict(), indent=2, ensure_ascii=False))
     else:
-        print(text_report(a.list, a.profile, r.findings, r.track, r.track_reason, r.root_corrected))
+        print(text_report(r))
     return 1 if r.findings else 0
 
 

@@ -564,7 +564,54 @@
             "quote": "When an XML binding is used to issue the Pub-EAA providers list, the Signature component shall be present with a",
             "page": 66,
             "line": 3858
-          }
+          },
+          "constraint": [
+            {
+              "key": "H-sig-ref-uri",
+              "severity": "error",
+              "human": "ds:SignedInfo has a ds:Reference with URI=\"\" (the entire document)",
+              "expression": null,
+              "xpath": "ds:SignedInfo/ds:Reference[@URI='']",
+              "checkable": "yes",
+              "row": "H.4 Signature",
+              "from": "text",
+              "citation": {
+                "quote": "Its ds:SignedInfo element shall contain a ds:Reference element with the URI attribute set to an",
+                "page": 66,
+                "line": 3863
+              }
+            },
+            {
+              "key": "H-sig-transforms",
+              "severity": "error",
+              "human": "The ds:Reference with URI=\"\" has one ds:Transforms with two ds:Transform: enveloped-signature, then exclusive canonicalization",
+              "expression": null,
+              "xpath": "not(ds:SignedInfo/ds:Reference[@URI='']) or ds:SignedInfo/ds:Reference[@URI=''][count(ds:Transforms)=1][count(ds:Transforms/ds:Transform)=2][ds:Transforms/ds:Transform[1]/@Algorithm='http://www.w3.org/2000/09/xmldsig#enveloped-signature'][ds:Transforms/ds:Transform[2]/@Algorithm='http://www.w3.org/2001/10/xml-exc-c14n#']",
+              "checkable": "yes",
+              "row": "H.4 Signature",
+              "from": "text",
+              "citation": {
+                "quote": "This ds:Transforms element shall contain two ds:Transform elements.",
+                "page": 66,
+                "line": 3869
+              }
+            },
+            {
+              "key": "H-sig-c14n",
+              "severity": "error",
+              "human": "ds:SignedInfo is canonicalized with exclusive canonicalization",
+              "expression": null,
+              "xpath": "ds:SignedInfo/ds:CanonicalizationMethod/@Algorithm='http://www.w3.org/2001/10/xml-exc-c14n#'",
+              "checkable": "yes",
+              "row": "H.4 Signature",
+              "from": "text",
+              "citation": {
+                "quote": "ds:CanonicalizationMethod shall be \"http://www.w3.org/2001/10/xml-exc-c14n#\".",
+                "page": 66,
+                "line": 3875
+              }
+            }
+          ]
         },
         "validation": "not-schema-based",
         "validated_by": "a signature validator (not built yet): envelope, header, signing certificate, cryptographic check",

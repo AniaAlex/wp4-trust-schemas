@@ -15,6 +15,8 @@ Translation of a differential element (path -> binding location):
   binding (required)         JSON: 'enum'                                    XML: assert the value is one of the set
   constraint with 'check'    JSON: 'contains' / 'minItems'                   XML: XPath assertion
   check 'months-after'       JSON: listed in $comment (no comparison)        XML: XPath 1.0 date comparison
+  xml.constraint (xpath)     JSON: none (XML binding only)                   XML: the constraint's XPath, from the element
+                             (e.g. the H.4 2)-3) checks of ds:Signature; 'from': 'wp4' rules say so in their message)
   constraint without check   listed as a rules-layer requirement (JSON $comment and x-rules-layer, Schematron comment)
 
 Every rule carries its id and the citation of its overlay element, so a validation report can name the rule and the
@@ -267,6 +269,10 @@ class SchProfile:
             self.add(rid(e, "xml-required"), ctx, rel, f"{component_name(e)} is required in XML", eb)
         if xb.get("max") == 0:
             self.add(rid(e, "xml-prohibited"), ctx, f"not({rel})", f"{component_name(e)} is not part of the XML binding", eb)
+        for c in xb.get("constraint", []):                    # XML-only invariants: an XPath from the element itself
+            ce = {**e, "row": c.get("row", e["row"]), "citation": c.get("citation") or eb.get("citation")}
+            text = ("WP4 rule (project_decisions_vs_etsi.md #2): " if c.get("from") == "wp4" else "") + c["human"]
+            self.add(c["key"], f"{ctx}/{rel}", c["xpath"], text, ce)
         for c in e.get("constraint", []):
             ck = c.get("check")
             if not ck:

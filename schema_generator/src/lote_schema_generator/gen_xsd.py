@@ -41,6 +41,7 @@ VALUE_TYPE = {
     "scheme-name": "lote:SchemeNameListType", "electronic-address": "lote:ElectronicAddressType",
     "country-code": "lote:CountryCodeType", "country-code-a": "lote:CountryCodeAType", "mime-type": "lote:MimeTypeType",
     "base64": "xsd:base64Binary", "string": "lote:NonEmptyStringType", "typed-uri": "lote:TypedURIType", "open": "lote:AnyType",
+    "xml-id": "xsd:ID",
 }
 PLAIN_TEXT_PATTERN = ("[^\\t\\n\\r&#x7F;-&#x9F;&#xE000;-&#xF8FF;&#xFEFF;&#xE0000;-&#xE007F;&#xF0000;-&#x10FFFF;]+")
 

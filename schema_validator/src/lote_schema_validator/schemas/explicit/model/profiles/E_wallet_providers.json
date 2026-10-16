@@ -517,7 +517,57 @@
           "name": "ds:Signature",
           "from": "wp4",
           "reason": "Annex E allows JSON only (E.1). WP4 also validates XML lists of this annex for their content, with the core's XML binding of the signature: ds:Signature inside the list (enveloped) or the list inside the signature (enveloping), 6.8.0. Such a list does not conform by format (project_decisions_vs_etsi.md #1).",
-          "note": "Optional, as in the core."
+          "note": "Optional, as in the core.",
+          "constraint": [
+            {
+              "key": "E-sig-ref-uri",
+              "severity": "error",
+              "human": "ds:SignedInfo has a ds:Reference with URI=\"\" (the entire document)",
+              "expression": null,
+              "xpath": "ds:SignedInfo/ds:Reference[@URI='']",
+              "checkable": "yes",
+              "row": "H.4 Signature",
+              "from": "wp4",
+              "reason": "Annex E allows JSON only and defines no XML signature. WP4 applies H.4 2)-3), the only XML signature profile of TS 119 602, to XML lists of this annex when they carry ds:Signature: a reference by Id is open to signature wrapping (project_decisions_vs_etsi.md #2).",
+              "citation": {
+                "quote": "Its ds:SignedInfo element shall contain a ds:Reference element with the URI attribute set to an",
+                "page": 66,
+                "line": 3863
+              }
+            },
+            {
+              "key": "E-sig-transforms",
+              "severity": "error",
+              "human": "The ds:Reference with URI=\"\" has one ds:Transforms with two ds:Transform: enveloped-signature, then exclusive canonicalization",
+              "expression": null,
+              "xpath": "not(ds:SignedInfo/ds:Reference[@URI='']) or ds:SignedInfo/ds:Reference[@URI=''][count(ds:Transforms)=1][count(ds:Transforms/ds:Transform)=2][ds:Transforms/ds:Transform[1]/@Algorithm='http://www.w3.org/2000/09/xmldsig#enveloped-signature'][ds:Transforms/ds:Transform[2]/@Algorithm='http://www.w3.org/2001/10/xml-exc-c14n#']",
+              "checkable": "yes",
+              "row": "H.4 Signature",
+              "from": "wp4",
+              "reason": "Annex E allows JSON only and defines no XML signature. WP4 applies H.4 2)-3), the only XML signature profile of TS 119 602, to XML lists of this annex when they carry ds:Signature: a reference by Id is open to signature wrapping (project_decisions_vs_etsi.md #2).",
+              "citation": {
+                "quote": "This ds:Transforms element shall contain two ds:Transform elements.",
+                "page": 66,
+                "line": 3869
+              }
+            },
+            {
+              "key": "E-sig-c14n",
+              "severity": "error",
+              "human": "ds:SignedInfo is canonicalized with exclusive canonicalization",
+              "expression": null,
+              "xpath": "ds:SignedInfo/ds:CanonicalizationMethod/@Algorithm='http://www.w3.org/2001/10/xml-exc-c14n#'",
+              "checkable": "yes",
+              "row": "H.4 Signature",
+              "from": "wp4",
+              "reason": "Annex E allows JSON only and defines no XML signature. WP4 applies H.4 2)-3), the only XML signature profile of TS 119 602, to XML lists of this annex when they carry ds:Signature: a reference by Id is open to signature wrapping (project_decisions_vs_etsi.md #2).",
+              "citation": {
+                "quote": "ds:CanonicalizationMethod shall be \"http://www.w3.org/2001/10/xml-exc-c14n#\".",
+                "page": 66,
+                "line": 3875
+              }
+            }
+          ]
         },
         "validation": "not-schema-based",
         "validated_by": "a signature validator (not built yet): envelope, header, signing certificate, cryptographic check",

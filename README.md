@@ -38,7 +38,7 @@ After a change to the model or the generator: `lote-schemas build --publish`, th
 
 ## Profiles
 
-TS 119 602 defines six EU profiles, Annexes D–I. Each narrows the explicit track: fixed URIs, required and prohibited components, extra rules. A list names its profile by its `LoTEType`; validate it with `lote-validate <list> --profile <annex>`.
+TS 119 602 defines six EU profiles, Annexes D–I. Each narrows the explicit track: fixed URIs, required and prohibited components, extra rules. A list names its profile by its `LoTEType`: `lote-validate <list>` applies that profile, and `--profile <annex>` sets it explicitly (with a warning when it differs from the one the list declares).
 
 | Annex | List of | `LoTEType` | Binding the annex allows | Validate | Files |
 |---|---|---|---|---|---|
@@ -48,11 +48,11 @@ TS 119 602 defines six EU profiles, Annexes D–I. Each narrows the explicit tra
 | G | providers of wallet relying party registration certificates (WRPRC) | `…/LoTEType/EUWRPRCProvidersList` | JSON | `.venv/bin/lote-validate list.json --profile G` | `G_wrprc_providers` |
 | H | public sector bodies issuing electronic attestation of attributes (Pub-EAA) | `…/LoTEType/EUPubEAAProvidersList` | JSON or XML | `.venv/bin/lote-validate list.json --profile H`<br>`.venv/bin/lote-validate list.xml --profile H` | `H_pub_eaa_providers` |
 | I | registrars and registers | `…/LoTEType/EURegistrarsAndRegistersList` | JSON | `.venv/bin/lote-validate list.json --profile I` | `I_registrars_and_registers` |
-| – | List of Trusted Lists (no annex) | – | – | `.venv/bin/lote-validate list.json --explicit` | – |
+| – | List of Trusted Lists (no annex) | – | – | `.venv/bin/lote-validate list.json --no-profile` | – |
 
 - **Files:** each profile is an overlay in [schema_generator/explicit/model/profiles/](schema_generator/explicit/model/profiles/) (`<name>.json`), generated into [schema_generator/explicit/generated/profiles/](schema_generator/explicit/generated/profiles/) as `lote_profile_<name>.json` (JSON Schema) and `.sch` (Schematron).
 - **XML for D–G and I:** the annexes allow only JSON, but XML profiles are generated for all six, as content checks ([decisions #1](docs/project_decisions_vs_etsi.md#1-xml-profiles-for-annexes-that-allow-only-json)).
-- **No profile:** the List of Trusted Lists has no annex; validate it with `--explicit` ([decisions #3](docs/project_decisions_vs_etsi.md#3-wp4-lists-are-explicit-the-implicit-track-is-not-used-in-wp4)).
+- **No profile:** the List of Trusted Lists has no annex; validate it with `--no-profile` (the explicit track only) ([decisions #3](docs/project_decisions_vs_etsi.md#3-wp4-lists-are-explicit-the-implicit-track-is-not-used-in-wp4)).
 
 ## Commands
 
@@ -62,7 +62,9 @@ Run from the repository root after the Quick start install. Every command has `-
 
 | Flag | Effect |
 |---|---|
-| `--profile {D,E,F,G,H,I}` | also apply the annex profile (implies `--explicit`) |
+| (none) | apply the annex profile whose `LoTEType` the list declares, if any |
+| `--profile {D,E,F,G,H,I}` | apply this annex profile (implies `--explicit`); warns when the list declares another annex |
+| `--no-profile` | apply no profile: the explicit track only |
 | `--explicit` | validate as an explicit list (Table 1, explicit column); the default and only track |
 | `--json` | print the findings as JSON instead of text |
 

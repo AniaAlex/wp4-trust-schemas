@@ -718,6 +718,36 @@
           }
         },
         {
+          "name": "Id",
+          "min": 0,
+          "max": 1,
+          "value": "xml-id",
+          "xml": {
+            "form": "attribute",
+            "from": "forge-xsd",
+            "forge": "attribute name=\"Id\" type=\"xsd:ID\" use=\"optional\"",
+            "note": "Not a component of the text; accepted because Forge allows it (project_decisions_vs_etsi.md #5)."
+          },
+          "json": {
+            "max": "0",
+            "from": "project",
+            "reason": "Forge JSON has no Id; a JSON list is signed by encapsulation (compact JAdES) and has nothing to point at."
+          },
+          "note": "XML only: an identifier a ds:Reference can point at (URI=\"#<Id>\"). Annex H does not use it: H.4 2) requires URI=\"\" (the whole document).",
+          "source": {
+            "id": "6.8/Id",
+            "clause": "6.8.0",
+            "text_names": [],
+            "citations": [
+              {
+                "quote": "The AdES digital signature may either be present within the LoTE itself, when the signature format provides for such a relationship between the signed data and the signature, or the signature itself encapsulates the LoTE.",
+                "line": 2417,
+                "page": 38
+              }
+            ]
+          }
+        },
+        {
           "name": "ListAndSchemeInformation",
           "min": 1,
           "max": 1,

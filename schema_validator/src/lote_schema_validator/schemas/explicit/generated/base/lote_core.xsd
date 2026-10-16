@@ -38,6 +38,7 @@
       <xsd:element ref="ds:Signature" minOccurs="0"/>  <!-- Clause 6.8.0, p. 38: "If the AdES digital signature is present within the LoTE itself, it shall be provided through the Signature component" -->
     </xsd:sequence>
     <xsd:attribute name="LoTETag" type="lote:NonEmptyURIType" use="required"/>
+    <xsd:attribute name="Id" type="xsd:ID" use="optional"/>
   </xsd:complexType>
   <xsd:complexType name="ListAndSchemeInformationType">
     <xsd:annotation><xsd:documentation>Clause 6.3.0, p. 15: "In case the scheme information is implicit, the LoTE need not contain this component." Which components are required depends on implicit vs explicit scheme information: rule R-Table1.</xsd:documentation></xsd:annotation>

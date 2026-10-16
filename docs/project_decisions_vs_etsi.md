@@ -11,7 +11,7 @@ The project generates a JSON profile **and** an XML (Schematron) profile for eac
 | D, E, F, G, I | "shall comply with the scheme explicit **JSON** schema definition specified in Annex A" (e.g. D.1, p. 46, line 2838) | JSON **and** XML (e.g. `lote_profile_D_pid_providers.sch`) |
 | H | "shall comply with **either** the scheme explicit XML schema definition … **or** the scheme explicit JSON schema definition" (p. 62, line 3646) | JSON and XML |
 
-**Why the XML profiles exist anyway.** The generator treats every annex the same way, and the XML profiles check the *content* rules of the annex correctly: fixed URIs, required and prohibited elements, the Member State URIs, the 6-month `NextUpdate` limit. Real lists of annexes D–G and I are published in XML (e.g. a WP4 PID providers list), and the XML profiles show their content errors.
+**Why the XML profiles exist anyway.** The generator treats every annex the same way, and the XML profiles check the *content* rules of the annex correctly: fixed URIs, required and prohibited elements, the Member State URIs, the 6-month `NextUpdate` limit, and the structure of an enveloped signature (H.4 2)–3), a WP4 rule for D–G and I, #2). Real lists of annexes D–G and I are published in XML (e.g. a WP4 PID providers list), and the XML profiles show their content errors.
 
 **Consequence.** An XML list of annex D, E, F, G or I is not conforming by format, whatever its content: its annex requires JSON, signed with compact JAdES (x.4). The XML profiles of those annexes are content checks only.
 
@@ -34,6 +34,19 @@ Every list "shall be signed by means of an AdES digital signature at conformance
 - the H.4 details (enveloped signature, the two transforms, exclusive canonicalization) are not checked by the schemas; they belong to a signature validator;
 - an enveloping XML list is validated only if the list is first taken out of the signature's `ds:Object`, which [tools/lote_validate.py](../schema_validator/src/lote_schema_validator/validate.py) does not do yet;
 - whether a list is signed at all is not checked: an enveloping signature lies outside the list, so this needs the signature validator, not the schema.
+
+**The structure of an enveloped XML signature: H.4 2)–3) in every profile.** H.4 is the only place where TS 119 602 says how an XML signature of a LoTE is built: "Its ds:SignedInfo element shall contain a ds:Reference element with the URI attribute set to an empty string (i.e. URI=""), so as to refer to the entire document" (2), p. 66, line 3863), with one `ds:Transforms` holding the enveloped-signature transform, then exclusive canonicalization (2) a)–b), line 3867), and `ds:CanonicalizationMethod` exclusive canonicalization (3), line 3875). Each profile checks these three points on a `ds:Signature` inside the list (Schematron; the XPath is in the overlay element's `xml.constraint`):
+
+| Rule | Checks | H | D, E, F, G, I |
+|---|---|---|---|
+| `X-sig-ref-uri` | a `ds:Reference` with `URI=""` | the text (H.4 2)) | **WP4 rule** |
+| `X-sig-transforms` | that reference: one `ds:Transforms`, enveloped-signature then exclusive C14N | the text (H.4 2) a)–b)) | **WP4 rule** |
+| `X-sig-c14n` | `ds:CanonicalizationMethod` is exclusive C14N | the text (H.4 3)) | **WP4 rule** |
+
+- **Why WP4 applies them to D–G and I.** These annexes allow only JSON and define no XML signature; XML lists of them are still validated for their content (#1). For such a list, H.4 is the closest the text comes to an XML signature profile, and its `URI=""` closes a known weakness: a reference by `Id` (`URI="#…"`) signs one element, which an attacker can move aside and replace with a forged one that a careless consumer reads instead (XML signature wrapping). `URI=""` signs the whole document, so nothing can be moved or added.
+- **How a WP4 rule is marked.** The overlay constraint has `"from": "wp4"` and a `reason`; the Schematron message starts with "WP4 rule (project_decisions_vs_etsi.md #2)"; the validator's JSON finding has `"from": "wp4"` in its `source`. The citation is the H.4 sentence the rule comes from.
+- **Only when signed inside the list.** The rules fire on `ds:Signature` inside the list; a list without one gets no finding from them (the signature stays optional for D–G and I, and `H-Signature-xml-required` reports its absence in H). An enveloping signature is not seen (see above).
+- **Not checked:** the rest of XAdES Baseline B, the signing certificate, and whether the signature is valid; this is for the signature validator. No profile (`--no-profile`): the core text allows any reference, so none of these rules applies.
 
 ## 3. WP4 lists are explicit; the implicit track is not used in WP4
 
@@ -68,6 +81,18 @@ Since 2026-10-15 the project works on the explicit track only (see #3: every WP4
 - **Not published:** `lote-schemas publish` copies only the generator's `explicit/` directory into the validator. The validator validates every list as explicit: there is no `--implicit` and no guessing of the track, so a list without the scheme information fails with the Table 1 rules instead of passing as implicit.
 - **Consequence:** the explicit model will drift from the base model. Its `scheme` entries still record what Table 1 changes, but a later change in the explicit model is not reflected in the base model or the implicit track.
 - **Unfreeze when:** ETSI publishes an implicit binding or an erratum to clause 6, or WP4 needs implicit lists. Then carry the explicit changes made since the freeze back into the base model (or the explicit differential), set the status back, and put `derive_tracks.py` back into the build.
+
+## 5. An optional `Id` attribute on the XML root, as in Forge
+
+The text defines no `Id` on the list. The Forge XSD allows one: `<xsd:attribute name="Id" type="xsd:ID" use="optional"/>` on `ListOfTrustedEntities`. Signing tools use it as the target of a XAdES reference (`<ds:Reference URI="#<Id>">`), as in the IDunion PID list (2026-10-16), whose root carries `Id="TrustedEntitiesList"`.
+
+**Decision.** The explicit model has an optional `Id` attribute of type `xsd:ID` on the root, in the XML binding only (`"from": "forge-xsd"`). JSON has none: Forge JSON has no `Id`, and a JSON list is signed by encapsulation (compact JAdES).
+
+**Why.** Compatibility with Forge and with lists signed by tools that set an `Id`; the text does not forbid one.
+
+**Limits.**
+- An `Id` does not make a reference by `Id` conforming. For an H list in XML, the reference must be `URI=""`: "Its ds:SignedInfo element shall contain a ds:Reference element with the URI attribute set to an empty string (i.e. URI=""), so as to refer to the entire document." (H.4 2), p. 66, line 3863). The profiles check it: `H-sig-ref-uri` in H (the text), and `D-sig-ref-uri` … `I-sig-ref-uri` in the other annexes (WP4 rule, #2). So in every profile an `Id` is accepted and signed with the rest of the document, but is not the signature's target; without a profile (`--no-profile`), a reference by `Id` stays allowed.
+- Only the root has an `Id`. Forge also has none on other elements.
 
 ## Open decisions
 

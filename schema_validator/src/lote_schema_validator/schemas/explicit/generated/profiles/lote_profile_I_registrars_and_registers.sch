@@ -111,4 +111,19 @@
       <sch:assert id="I-ServiceSupplyPoints-required" test="lote:ServiceSupplyPoints">[I-ServiceSupplyPoints-required] ServiceSupplyPoints is required. Table I.3 Service supply points (p. 69, line 4046): "The ServiceSupplyPoint component shall contain the URI where the register is"</sch:assert>
     </sch:rule>
   </sch:pattern>
+  <sch:pattern id="p-I-sig-ref-uri">
+    <sch:rule context="/lote:ListOfTrustedEntities/ds:Signature">
+      <sch:assert id="I-sig-ref-uri" test="ds:SignedInfo/ds:Reference[@URI='']">[I-sig-ref-uri] WP4 rule (project_decisions_vs_etsi.md #2): ds:SignedInfo has a ds:Reference with URI="" (the entire document). H.4 Signature (p. 66, line 3863): "Its ds:SignedInfo element shall contain a ds:Reference element with the URI attribute set to an"</sch:assert>
+    </sch:rule>
+  </sch:pattern>
+  <sch:pattern id="p-I-sig-transforms">
+    <sch:rule context="/lote:ListOfTrustedEntities/ds:Signature">
+      <sch:assert id="I-sig-transforms" test="not(ds:SignedInfo/ds:Reference[@URI='']) or ds:SignedInfo/ds:Reference[@URI=''][count(ds:Transforms)=1][count(ds:Transforms/ds:Transform)=2][ds:Transforms/ds:Transform[1]/@Algorithm='http://www.w3.org/2000/09/xmldsig#enveloped-signature'][ds:Transforms/ds:Transform[2]/@Algorithm='http://www.w3.org/2001/10/xml-exc-c14n#']">[I-sig-transforms] WP4 rule (project_decisions_vs_etsi.md #2): The ds:Reference with URI="" has one ds:Transforms with two ds:Transform: enveloped-signature, then exclusive canonicalization. H.4 Signature (p. 66, line 3869): "This ds:Transforms element shall contain two ds:Transform elements."</sch:assert>
+    </sch:rule>
+  </sch:pattern>
+  <sch:pattern id="p-I-sig-c14n">
+    <sch:rule context="/lote:ListOfTrustedEntities/ds:Signature">
+      <sch:assert id="I-sig-c14n" test="ds:SignedInfo/ds:CanonicalizationMethod/@Algorithm='http://www.w3.org/2001/10/xml-exc-c14n#'">[I-sig-c14n] WP4 rule (project_decisions_vs_etsi.md #2): ds:SignedInfo is canonicalized with exclusive canonicalization. H.4 Signature (p. 66, line 3875): "ds:CanonicalizationMethod shall be "http://www.w3.org/2001/10/xml-exc-c14n#"."</sch:assert>
+    </sch:rule>
+  </sch:pattern>
 </sch:schema>
