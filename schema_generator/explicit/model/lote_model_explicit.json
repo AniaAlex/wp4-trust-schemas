@@ -12,6 +12,15 @@
     "constraints": "Rules across components are 'constraint' entries on the structure they constrain, in the format of the profile overlays (FHIR invariant: key, severity, human, expression; plus clause, checkable and check). A constraint with a 'check' is enforced by the generated schemas; one without is a rules-layer requirement."
   },
   "root": "LoTE",
+  "lote_types_without_profile": [
+    {
+      "profile": "LoTL",
+      "uri": "http://uri.etsi.org/19602/LoTLType/EUListOfTrustedLists",
+      "name": "List of Trusted Lists",
+      "from": "wp4",
+      "reason": "TS 119 602 registers no LoTEType for a list of lists and no annex covers it; WP4 mocks the EU List of Trusted Lists. lote-validate checks a list with this LoTEType against the explicit track only (project_decisions_vs_etsi.md #3)."
+    }
+  ],
   "value_types": {
     "integer": {
       "description": "Integer.",

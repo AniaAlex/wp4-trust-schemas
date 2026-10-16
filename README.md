@@ -29,7 +29,7 @@ docs/         the text (spec/: txt, pdf), project decisions vs ETSI, ETSI defect
 python -m venv .venv
 .venv/bin/pip install -e "schema_generator[dev]" -e "schema_validator[dev]"
 
-.venv/bin/lote-validate list.xml --profile D       # validate a list
+.venv/bin/lote-validate list.xml                  # validate a list (its profile is chosen from its LoTEType)
 cd schema_generator && ../.venv/bin/lote-schemas build --publish && ../.venv/bin/pytest   # rebuild, publish, test
 cd ../schema_validator && ../.venv/bin/pytest
 ```
@@ -48,38 +48,38 @@ After a change to the model or the generator: `lote-schemas build --publish`, th
 
 ## Profiles
 
-TS 119 602 defines six EU profiles, Annexes D–I. Each narrows the explicit track: fixed URIs, required and prohibited components, extra rules. A list names its profile by its `LoTEType`: `lote-validate <list>` applies that profile, and `--profile <annex>` sets it explicitly (with a warning when it differs from the one the list declares).
+TS 119 602 defines six EU profiles, Annexes D–I. Each narrows the explicit track: fixed URIs, required and prohibited components, extra rules. A list names its profile by its `LoTEType`, which must be exactly the URI of its annex: `lote-validate <list>` applies that profile. `--profile <annex>` is used only for a list whose `LoTEType` names no annex; if the list declares another annex, the declared one is used, with a warning.
 
 | Annex | List of | `LoTEType` | Binding the annex allows | Validate | Files |
 |---|---|---|---|---|---|
-| D | providers of person identity data (PID) | `http://uri.etsi.org/19602/LoTEType/EUPIDProvidersList` | JSON | `.venv/bin/lote-validate list.json --profile D` | `D_pid_providers` |
-| E | wallet providers | `…/LoTEType/EUWalletProvidersList` | JSON | `.venv/bin/lote-validate list.json --profile E` | `E_wallet_providers` |
-| F | providers of wallet relying party access certificates (WRPAC) | `…/LoTEType/EUWRPACProvidersList` | JSON | `.venv/bin/lote-validate list.json --profile F` | `F_wrpac_providers` |
-| G | providers of wallet relying party registration certificates (WRPRC) | `…/LoTEType/EUWRPRCProvidersList` | JSON | `.venv/bin/lote-validate list.json --profile G` | `G_wrprc_providers` |
-| H | public sector bodies issuing electronic attestation of attributes (Pub-EAA) | `…/LoTEType/EUPubEAAProvidersList` | JSON or XML | `.venv/bin/lote-validate list.json --profile H`<br>`.venv/bin/lote-validate list.xml --profile H` | `H_pub_eaa_providers` |
-| I | registrars and registers | `…/LoTEType/EURegistrarsAndRegistersList` | JSON | `.venv/bin/lote-validate list.json --profile I` | `I_registrars_and_registers` |
-| – | List of Trusted Lists (no annex) | – | – | `.venv/bin/lote-validate list.json --no-profile` | – |
+| D | providers of person identity data (PID) | `http://uri.etsi.org/19602/LoTEType/EUPIDProvidersList` | JSON | `.venv/bin/lote-validate list.json` | `D_pid_providers` |
+| E | wallet providers | `…/LoTEType/EUWalletProvidersList` | JSON | `.venv/bin/lote-validate list.json` | `E_wallet_providers` |
+| F | providers of wallet relying party access certificates (WRPAC) | `…/LoTEType/EUWRPACProvidersList` | JSON | `.venv/bin/lote-validate list.json` | `F_wrpac_providers` |
+| G | providers of wallet relying party registration certificates (WRPRC) | `…/LoTEType/EUWRPRCProvidersList` | JSON | `.venv/bin/lote-validate list.json` | `G_wrprc_providers` |
+| H | public sector bodies issuing electronic attestation of attributes (Pub-EAA) | `…/LoTEType/EUPubEAAProvidersList` | JSON or XML | `.venv/bin/lote-validate list.json`<br>`.venv/bin/lote-validate list.xml` | `H_pub_eaa_providers` |
+| I | registrars and registers | `…/LoTEType/EURegistrarsAndRegistersList` | JSON | `.venv/bin/lote-validate list.json` | `I_registrars_and_registers` |
+| `LoTL` | List of Trusted Lists (no annex) | `http://uri.etsi.org/19602/LoTLType/EUListOfTrustedLists` (WP4) | – | `.venv/bin/lote-validate list.json` (explicit track only) | – |
 
 - **Files:** each profile is an overlay in [schema_generator/explicit/model/profiles/](schema_generator/explicit/model/profiles/) (`<name>.json`), generated into [schema_generator/explicit/generated/profiles/](schema_generator/explicit/generated/profiles/) as `lote_profile_<name>.json` (JSON Schema) and `.sch` (Schematron).
 - **XML for D–G and I:** the annexes allow only JSON, but XML profiles are generated for all six, as content checks ([decisions #1](docs/project_decisions_vs_etsi.md#1-xml-profiles-for-annexes-that-allow-only-json)).
-- **No profile:** the List of Trusted Lists has no annex; validate it with `--no-profile` (the explicit track only) ([decisions #3](docs/project_decisions_vs_etsi.md#3-wp4-lists-are-explicit-the-implicit-track-is-not-used-in-wp4)).
+- **The List of Trusted Lists (profile `LoTL`):** no annex covers it, so a list with its `LoTEType` (a WP4 value, not in the text) is checked against the explicit track only. Any other `LoTEType`, or none, is an invalid profile: validation stops and lists the seven valid URIs ([decisions #3](docs/project_decisions_vs_etsi.md#3-wp4-lists-are-explicit-the-implicit-track-is-not-used-in-wp4)).
 
 ## Commands
 
 Run from the repository root after the Quick start install. Every command has `--help`.
 
-**`lote-validate <list>`**: validate a list (`.xml` or `.json`). Exit code 0 if valid, 1 if there are findings.
+**`lote-validate <list>`**: validate a list (`.xml` or `.json`). Exit code 0 if valid, 1 if there are findings, 2 on a usage error, including an invalid profile (a `LoTEType` that is missing or not one of the seven URIs).
 
 | Flag | Effect |
 |---|---|
-| (none) | apply the annex profile whose `LoTEType` the list declares, if any |
-| `--profile {D,E,F,G,H,I}` | apply this annex profile (implies `--explicit`); warns when the list declares another annex |
-| `--no-profile` | apply no profile: the explicit track only |
-| `--explicit` | validate as an explicit list (Table 1, explicit column); the default and only track |
+| (none) | apply the profile the list's `LoTEType` names: an annex D–I, or `LoTL` for the List of Trusted Lists (explicit track only). A missing `LoTEType`, or one that is not exactly one of these seven URIs, stops with `error: invalid profile: … The profiles must be:` and the seven URIs (exit 2) |
+| `--profile {D,E,F,G,H,I}` | the annex profile you expect. The list's `LoTEType` decides: if it declares another profile, that one is used, with a warning; if it is invalid, the error above |
+| `--lotl` | the same, expecting profile `LoTL` (List of Trusted Lists: explicit track, no annex; a WP4 type). Excludes `--profile` |
+| `--explicit` | temporarily not in use, since only the explicit track is used |
 | `--json` | print the findings as JSON instead of text |
 
 ```bash
-.venv/bin/lote-validate list.json --profile D --json > report.json
+.venv/bin/lote-validate list.json --json > report.json
 ```
 
 **`lote-schemas`** (generator; run inside `schema_generator/`):

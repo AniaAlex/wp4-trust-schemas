@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from lote_schema_validator import Report, validate
-from lote_schema_validator.validate import SCHEMAS, main
+from lote_schema_validator.validate import SCHEMAS, ProfileError, main
 
 DATA = Path(__file__).parent / "data"
 GENERATOR = Path(__file__).resolve().parents[2] / "schema_generator"
@@ -29,11 +29,11 @@ CASES = [
     ("H_pub_eaa_providers.xml", "H", None, "explicit", set()),
     ("explicit_list.json", False, None, "explicit", set()),
     ("explicit_list.xml", False, None, "explicit", set()),
-    ("implicit_list_direct.json", None, None, "explicit", DIRECT | {"EXP-ListAndSchemeInformation-required"}),
-    ("implicit_list_direct.xml", None, None, "explicit", DIRECT),       # XSD stops at the first unexpected element
+    ("implicit_list_direct.json", False, None, "explicit", DIRECT | {"EXP-ListAndSchemeInformation-required"}),
+    ("implicit_list_direct.xml", False, None, "explicit", DIRECT),      # XSD stops at the first unexpected element
     ("D_with_json_signature.json", "D", None, "explicit", {"LoTE-Signature-not-in-json", "D-Signature-json-prohibited"}),
     ("H_without_signature.xml", "H", None, "explicit", {"H-Signature-xml-required"}),                      # H.4
-    ("implicit_list_with_scheme_name.json", None, "explicit", "explicit", SCHEME_INFO),                    # Table 1
+    ("implicit_list_with_scheme_name.json", False, "explicit", "explicit", SCHEME_INFO),                   # Table 1
 ]
 
 
@@ -47,7 +47,7 @@ def test_validate(name, profile, track, want_track, want_rules):
 
 
 @pytest.mark.parametrize("name,profile", [("D_with_json_signature.json", "D"), ("H_without_signature.xml", "H"),
-                                          ("implicit_list_with_scheme_name.json", None), ("implicit_list_direct.json", None)])
+                                          ("implicit_list_with_scheme_name.json", False), ("implicit_list_direct.json", False)])
 def test_every_failure_cites_the_text(name, profile):
     r = validate(DATA / name, profile=profile)
     for f in r.findings:
@@ -129,7 +129,7 @@ def test_wrong_root_does_not_hide_the_rest(tmp_path):
 def test_root_not_corrected_when_content_is_not_a_lote(tmp_path):
     f = tmp_path / "other.xml"
     f.write_text('<Invoice><Total>1</Total></Invoice>', encoding="utf-8")
-    r = validate(f, track="explicit")
+    r = validate(f, profile=False, track="explicit")
     assert not r.root_corrected and [x.rule for x in r.findings if x.layer == "xsd"] == ["LoTE-root"]
 
 
@@ -166,12 +166,13 @@ def test_only_the_explicit_track():
         validate(DATA / "explicit_list.json", track="implicit")
     with pytest.raises(SystemExit):                                     # --implicit is no longer an option
         main([str(DATA / "explicit_list.json"), "--implicit"])
-    assert main([str(DATA / "explicit_list.json"), "--explicit", "--no-profile"]) == 0
+    assert main([str(DATA / "D_pid_providers.json"), "--explicit"]) == 0
 
 
 def test_cli(capsys):
     assert main([str(DATA / "D_pid_providers.json"), "--profile", "D"]) == 0
-    assert "profile D (--profile D) - valid" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "profile D (from its LoTEType" in out and out.splitlines()[0].endswith("- valid")
     assert main([str(DATA / "H_without_signature.xml"), "--profile", "H", "--json"]) == 1
     out = json.loads(capsys.readouterr().out)
     assert out["profile"] == "H" and out["findings"][0]["rule"] == "H-Signature-xml-required"
@@ -205,36 +206,82 @@ def test_profile_from_lote_type(name, annex):
     assert r.profile_reason.startswith("from its LoTEType http://uri.etsi.org/19602/LoTEType/")
 
 
-def test_no_lote_type_no_profile():
-    r = validate(DATA / "implicit_list_direct.json")
-    assert r.profile is None and r.declared_profile is None and r.profile_reason == "it has no LoTEType"
+LOTL = "http://uri.etsi.org/19602/LoTLType/EUListOfTrustedLists"
 
 
-def test_no_profile_overrides_lote_type():
-    r = validate(DATA / "D_pid_providers.json", profile=False)
-    assert r.profile is None and r.declared_profile == "D" and r.profile_reason == "--no-profile"
+def _retyped(tmp_path, name, lote_type):
+    """A copy of a sample list with another LoTEType."""
+    text = (DATA / name).read_text(encoding="utf-8")
+    old = "http://uri.etsi.org/19602/LoTEType/EUPIDProvidersList"
+    assert old in text
+    f = tmp_path / name
+    f.write_text(text.replace(old, lote_type), encoding="utf-8")
+    return f
 
 
-def test_wrong_profile_warns():
+def test_wrong_profile_is_replaced_by_the_declared_one():
     r = validate(DATA / "D_pid_providers.json", profile="E")
-    assert r.profile == "E" and r.declared_profile == "D"
+    assert r.profile == "D" and r.declared_profile == "D" and r.valid
     (w,) = r.warnings
-    assert "(Annex D)" in w and "Did you mean --profile D?" in w
-    assert "E-LoTEType-fixed" in {f.rule for f in r.findings}               # the findings are still those of E
+    assert w.startswith("--profile E ignored:") and "Annex D" in w
 
 
 def test_right_profile_does_not_warn():
     assert not validate(DATA / "H_without_signature.xml", profile="H").warnings
 
 
-def test_cli_profile_flags(capsys):
-    assert main([str(DATA / "D_pid_providers.json"), "--profile", "E"]) == 1
+@pytest.mark.parametrize("name", ["explicit_list.json", "explicit_list.xml"])
+def test_list_of_trusted_lists_is_profile_lotl(tmp_path, name):
+    """No annex covers the LoTL (a WP4 LoTEType, project_decisions_vs_etsi.md #3): profile LoTL, the explicit track only."""
+    f = _retyped(tmp_path, name, LOTL)
+    for given in (None, "LoTL"):                                          # chosen from the LoTEType, or by --lotl
+        r = validate(f, profile=given)
+        assert r.profile == r.declared_profile == "LoTL" and r.valid and not r.warnings
+        assert r.profile_reason == f"from its LoTEType {LOTL}"
+    r = validate(f, profile="D")                                          # a --profile is overridden, with a warning
+    assert r.profile == "LoTL" and r.warnings[0].startswith("--profile D ignored:")
+
+
+def test_lotl_flag_behaves_as_a_profile(tmp_path):
+    r = validate(DATA / "D_pid_providers.json", profile="LoTL")           # the list declares Annex D: D is used
+    assert r.profile == "D" and r.valid and r.warnings[0].startswith("--lotl ignored:")
+    r = validate(_retyped(tmp_path, "D_pid_providers.json", LOTL), profile="LoTL")     # declared LoTL: no warning
+    assert r.profile == "LoTL" and not r.warnings
+
+
+@pytest.mark.parametrize("lote_type", ["http://uri.etsi.org/19602/LoTEType/EUPIDProviderList",       # typo
+                                       "https://uri.etsi.org/19602/LoTEType/EUPIDProvidersList"])     # not exact
+def test_unknown_lote_type_is_an_invalid_profile(tmp_path, lote_type):
+    """Not exactly one of the seven LoTEType URIs: no profile, whatever the flags."""
+    f = _retyped(tmp_path, "D_pid_providers.json", lote_type)
+    for given in (None, "D", "LoTL"):
+        with pytest.raises(ProfileError, match="invalid profile") as e:
+            validate(f, profile=given)
+        assert lote_type in str(e.value) and LOTL in str(e.value)
+        assert "http://uri.etsi.org/19602/LoTEType/EUPIDProvidersList" in str(e.value)
+
+
+def test_no_lote_type_is_an_invalid_profile():
+    for given in (None, "D", "LoTL"):
+        with pytest.raises(ProfileError, match="invalid profile: the list has no LoTEType"):
+            validate(DATA / "implicit_list_direct.json", profile=given)
+
+
+def test_cli_profile_flags(tmp_path, capsys):
+    assert main([str(DATA / "D_pid_providers.json"), "--profile", "E"]) == 0     # D is used: the list is valid
     out = capsys.readouterr().out
-    assert out.splitlines()[1].startswith("WARNING: ") and "Did you mean --profile D?" in out
-    assert main([str(DATA / "D_pid_providers.json")]) == 0
-    assert "profile D (from its LoTEType" in capsys.readouterr().out
-    with pytest.raises(SystemExit):                                     # --profile and --no-profile exclude each other
-        main([str(DATA / "D_pid_providers.json"), "--profile", "D", "--no-profile"])
+    assert "profile D (from its LoTEType" in out and out.splitlines()[1].startswith("WARNING: --profile E ignored")
+    with pytest.raises(SystemExit) as e:                                  # no profile can be chosen: usage error
+        main([str(_retyped(tmp_path, "D_pid_providers.json", "http://example.org/x"))])
+    assert e.value.code == 2
+    err = capsys.readouterr().err
+    assert 'invalid profile: the list\'s LoTEType is "http://example.org/x". The profiles must be:' in err and LOTL in err
+    with pytest.raises(SystemExit):                                       # --no-profile no longer exists
+        main([str(DATA / "D_pid_providers.json"), "--no-profile"])
+    with pytest.raises(SystemExit) as e:                                  # --profile and --lotl exclude each other
+        main([str(DATA / "D_pid_providers.json"), "--lotl", "--profile", "D"])
+    assert e.value.code == 2
+    assert main([str(DATA / "D_pid_providers.json"), "--lotl"]) == 0      # overridden by the declared Annex D
 
 
 # ------------------------------------------------------------------ XML signature structure: H.4 2)-3), and WP4 for D-G, I

@@ -17,7 +17,7 @@ The project generates a JSON profile **and** an XML (Schematron) profile for eac
 
 **In the model.** Each profile's signature element (`LoTE.Signature`) records this as its XML binding with `"from": "wp4"` and the reason: a WP4 decision, not the text. The element's JSON binding comes from the text (x.4).
 
-**Status: open.** [tools/lote_validate.py](../schema_validator/src/lote_schema_validator/validate.py) does not yet report the format, so an XML list with correct content is reported as "valid" against `--profile D`. Planned: a format finding per annex (e.g. `D-format`, citing D.1), recorded as a constraint in the profile overlays.
+**Status: open.** [lote-validate](../schema_validator/src/lote_schema_validator/validate.py) does not yet report the format, so an XML list with correct content is reported as "valid" against `--profile D`. Planned: a format finding per annex (e.g. `D-format`, citing D.1), recorded as a constraint in the profile overlays.
 
 ## 2. Signature placement in XML lists
 
@@ -32,7 +32,7 @@ Every list "shall be signed by means of an AdES digital signature at conformance
 **Status: the `Signature` component is optional (`0..1`) in the core and in both tracks; the H XML profile requires it** (rule `H-Signature-xml-required`, cited to H.4, p. 66, line 3858). In the profiles D, E, F, G and I it stays optional in XML, as in the core (a WP4 decision, entry 1). So:
 - an H list in XML without `ds:Signature` fails its profile; the other annexes accept XML lists with or without it, for their content only;
 - the H.4 details (enveloped signature, the two transforms, exclusive canonicalization) are not checked by the schemas; they belong to a signature validator;
-- an enveloping XML list is validated only if the list is first taken out of the signature's `ds:Object`, which [tools/lote_validate.py](../schema_validator/src/lote_schema_validator/validate.py) does not do yet;
+- an enveloping XML list is validated only if the list is first taken out of the signature's `ds:Object`, which [lote-validate](../schema_validator/src/lote_schema_validator/validate.py) does not do yet;
 - whether a list is signed at all is not checked: an enveloping signature lies outside the list, so this needs the signature validator, not the schema.
 
 **The structure of an enveloped XML signature: H.4 2)–3) in every profile.** H.4 is the only place where TS 119 602 says how an XML signature of a LoTE is built: "Its ds:SignedInfo element shall contain a ds:Reference element with the URI attribute set to an empty string (i.e. URI=""), so as to refer to the entire document" (2), p. 66, line 3863), with one `ds:Transforms` holding the enveloped-signature transform, then exclusive canonicalization (2) a)–b), line 3867), and `ds:CanonicalizationMethod` exclusive canonicalization (3), line 3875). Each profile checks these three points on a `ds:Signature` inside the list (Schematron; the XPath is in the overlay element's `xml.constraint`):
@@ -46,7 +46,7 @@ Every list "shall be signed by means of an AdES digital signature at conformance
 - **Why WP4 applies them to D–G and I.** These annexes allow only JSON and define no XML signature; XML lists of them are still validated for their content (#1). For such a list, H.4 is the closest the text comes to an XML signature profile, and its `URI=""` closes a known weakness: a reference by `Id` (`URI="#…"`) signs one element, which an attacker can move aside and replace with a forged one that a careless consumer reads instead (XML signature wrapping). `URI=""` signs the whole document, so nothing can be moved or added.
 - **How a WP4 rule is marked.** The overlay constraint has `"from": "wp4"` and a `reason`; the Schematron message starts with "WP4 rule (project_decisions_vs_etsi.md #2)"; the validator's JSON finding has `"from": "wp4"` in its `source`. The citation is the H.4 sentence the rule comes from.
 - **Only when signed inside the list.** The rules fire on `ds:Signature` inside the list; a list without one gets no finding from them (the signature stays optional for D–G and I, and `H-Signature-xml-required` reports its absence in H). An enveloping signature is not seen (see above).
-- **Not checked:** the rest of XAdES Baseline B, the signing certificate, and whether the signature is valid; this is for the signature validator. No profile (`--no-profile`): the core text allows any reference, so none of these rules applies.
+- **Not checked:** the rest of XAdES Baseline B, the signing certificate, and whether the signature is valid; this is for the signature validator. Without a profile (the List of Trusted Lists): the core text allows any reference, so none of these rules applies.
 
 ## 3. WP4 lists are explicit; the implicit track is not used in WP4
 
@@ -56,8 +56,10 @@ WP4 mocks the EU community rules, so its lists behave like the real EU lists, an
 
 | WP4 list | Kind | Validate with |
 |---|---|---|
-| PID, wallet, WRPAC, WRPRC, Pub-EAA providers; registrars and registers | explicit, annex profile D–I | `tools/lote_validate.py <list> --profile D` … `--profile I` (implies `--explicit`) |
-| List of Trusted Lists (`LoTLType/EUListOfTrustedLists`) | explicit: no annex covers it, but it mocks the EU LoTL, which fully describes its scheme | `tools/lote_validate.py <list> --explicit` |
+| PID, wallet, WRPAC, WRPRC, Pub-EAA providers; registrars and registers | explicit, annex profile D–I | `lote-validate <list>`: the profile its `LoTEType` names |
+| List of Trusted Lists (`http://uri.etsi.org/19602/LoTLType/EUListOfTrustedLists`) | explicit: no annex covers it, but it mocks the EU LoTL, which fully describes its scheme | `lote-validate <list>`: the explicit track only |
+
+**Every list is checked against a profile; the LoTL is the one exception.** `lote-validate` chooses the annex profile from the list's `LoTEType`, which must be exactly one of the six URIs fixed in Tables D.1–I.1; a `--profile` that names another annex is ignored, with a warning. TS 119 602 registers no `LoTEType` for a list of trusted lists, so WP4 uses its own value, `http://uri.etsi.org/19602/LoTLType/EUListOfTrustedLists`, recorded in the explicit model (`lote_types_without_profile`, `"from": "wp4"`). A list with this `LoTEType` is checked as profile `LoTL`: the explicit track only (`--lotl` names it, like `--profile` for an annex). Any other `LoTEType`, or none (missing, misspelt, unknown), is an invalid profile: validation stops with the list of the seven valid URIs, whatever the flags, so a near-miss such as `EUPIDProviderList` can no longer pass silently without its annex rules.
 
 **The implicit track** is provided for completeness of TS 119 602, for communities whose scheme is known out of band (closed federations, internal lists). It is not used in WP4.
 
@@ -91,7 +93,7 @@ The text defines no `Id` on the list. The Forge XSD allows one: `<xsd:attribute 
 **Why.** Compatibility with Forge and with lists signed by tools that set an `Id`; the text does not forbid one.
 
 **Limits.**
-- An `Id` does not make a reference by `Id` conforming. For an H list in XML, the reference must be `URI=""`: "Its ds:SignedInfo element shall contain a ds:Reference element with the URI attribute set to an empty string (i.e. URI=""), so as to refer to the entire document." (H.4 2), p. 66, line 3863). The profiles check it: `H-sig-ref-uri` in H (the text), and `D-sig-ref-uri` … `I-sig-ref-uri` in the other annexes (WP4 rule, #2). So in every profile an `Id` is accepted and signed with the rest of the document, but is not the signature's target; without a profile (`--no-profile`), a reference by `Id` stays allowed.
+- An `Id` does not make a reference by `Id` conforming. For an H list in XML, the reference must be `URI=""`: "Its ds:SignedInfo element shall contain a ds:Reference element with the URI attribute set to an empty string (i.e. URI=""), so as to refer to the entire document." (H.4 2), p. 66, line 3863). The profiles check it: `H-sig-ref-uri` in H (the text), and `D-sig-ref-uri` … `I-sig-ref-uri` in the other annexes (WP4 rule, #2). So in every profile an `Id` is accepted and signed with the rest of the document, but is not the signature's target; without a profile (the List of Trusted Lists), a reference by `Id` stays allowed.
 - Only the root has an `Id`. Forge also has none on other elements.
 
 ## Open decisions

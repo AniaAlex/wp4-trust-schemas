@@ -2,8 +2,7 @@
 sentence of ETSI TS 119 602 it breaks: rule id, location in the list, clause or annex row, page, line and quote.
 
     lote-validate list.xml --profile D       # explicit track + Annex D (PID providers)
-    lote-validate list.json                  # explicit track + the profile the list's LoTEType names, if any
-    lote-validate list.json --no-profile     # explicit track only (Table 1, explicit column)
+    lote-validate list.json                  # explicit track + the annex profile the list's LoTEType names
     lote-validate list.xml --profile D --json > report.json
 
     from lote_schema_validator import validate
@@ -14,9 +13,12 @@ or LOTE_SCHEMAS_DIR. Every list is validated as a scheme explicit list (clause 6
 lists are explicit, and the implicit track is frozen and not published (docs/project_decisions_vs_etsi.md #3, #4). A
 list without the scheme information therefore fails with the Table 1 rules (EXP-SchemeName-required, ...).
 
-Profile: --profile applies an annex; without it, the annex whose fixed LoTEType (Table x.1) the list declares is applied,
-and a list whose LoTEType names no annex is checked against the track only (--no-profile forces that). When --profile
-differs from the annex the list declares, the report starts with a warning that names the declared annex.
+Profile: every list is checked against the profile its LoTEType names, which must be exactly one of the six annex types
+fixed in Tables D.1-I.1, or the List of Trusted Lists type (http://uri.etsi.org/19602/LoTLType/EUListOfTrustedLists, a
+WP4 value in the model's lote_types_without_profile: profile LoTL, the explicit track only, no annex covers it). Any other
+LoTEType, or none, stops with "invalid profile" and the list of valid URIs (exit 2), whatever the flags. --profile and
+--lotl name the profile expected; when the list declares another one, the declared one is used, with a warning.
+--explicit is temporarily not in use.
 
 Layers, in order:
   XML   the track's XSD (lote_core.xsd), its Schematron (lote_core.sch), profile Schematron (generated/profiles/*.sch)
@@ -49,6 +51,10 @@ TRACKS = {"explicit": {"gen": os.path.join(EXPLICIT, "generated", "base"),
 PROFILES = os.path.join(EXPLICIT, "generated", "profiles")  # the profile schemas
 OVERLAYS = os.path.join(EXPLICIT, "model", "profiles")      # the profile overlays (rule citations)
 LOTETYPE = "LoTE.ListAndSchemeInformation.LoTEType"         # the overlay path whose fixedUri names the annex
+
+
+class ProfileError(ValueError):
+    """No annex profile can be chosen: the list's LoTEType is not an annex type, the LoTL type, and no --profile."""
 SVRL = {"svrl": "http://purl.oclc.org/dsdl/svrl"}
 PREFIX = {"http://www.w3.org/2000/09/xmldsig#": "ds"}       # prefixes in reported locations; other namespaces are lote:
 CORE_SCH_CLAUSE = {"LanguageTagCase": "6.1.4", "CountryCodeExclusions": "6.1.5", "ElectronicAddressContent": "6.3.5.2"}
@@ -550,6 +556,13 @@ def annex_types():
     return out
 
 
+def types_without_profile():
+    """LoTEType URI -> entry, for lists checked against the explicit track only (the model's lote_types_without_profile:
+    today the WP4 List of Trusted Lists)."""
+    model = json.load(open(TRACKS["explicit"]["model"], encoding="utf-8"))
+    return {t["uri"]: t for t in model.get("lote_types_without_profile", [])}
+
+
 def declared_lote_type(path, is_xml):
     """The list's LoTEType, or None. XML is matched by local name, so a list with a wrong root or namespace still
     declares its annex; a list that cannot be read declares none (the validation reports why)."""
@@ -599,11 +612,11 @@ class Report:
     path: str
     track: str                                            # always "explicit"
     track_reason: str                                     # why: the flag, the profile, or the default
-    profile: str = None                                   # annex letter applied, or None
+    profile: str = None                                   # annex letter applied, "LoTL", or None
     findings: list = field(default_factory=list)          # [Finding]
     root_corrected: bool = False                          # wrong root: the rest was checked as if the root were right
     profile_reason: str = ""                              # why: --profile, the list's LoTEType, or why none
-    declared_profile: str = None                          # the annex the list's LoTEType names, or None
+    declared_profile: str = None                          # what the list's LoTEType names: annex letter, "LoTL", or None
     warnings: list = field(default_factory=list)          # [str], e.g. --profile differs from the declared annex
 
     @property
@@ -618,9 +631,13 @@ class Report:
 
 
 def validate(path, profile=None, track=None):
-    """Validate the list at path as a scheme explicit list. profile: an annex letter D-I, None for the annex the list's
-    LoTEType names (if any), or False for none; track: "explicit" or None (the same: the explicit track is the only one
-    published, see docs/project_decisions_vs_etsi.md #4)."""
+    """Validate the list at path as a scheme explicit list against the profile its LoTEType names: an annex D-I, or "LoTL"
+    (the List of Trusted Lists: explicit track only, a WP4 type). profile: an annex letter or "LoTL", overridden (with a
+    warning) when the list declares another one; None; or False for the explicit track only (tests of the core rules).
+    Raises ProfileError ("invalid profile", with the valid LoTEType URIs) when the LoTEType is missing or not exactly one
+    of them, whatever profile is given.
+    track: "explicit" or None (the same: the explicit track is the only one published, docs/project_decisions_vs_etsi.md
+    #4)."""
     path = str(path)
     if track not in (None, "explicit"):
         raise ValueError(f"track {track!r} is not supported: only the explicit track is published (the implicit track is "
@@ -628,25 +645,32 @@ def validate(path, profile=None, track=None):
     with open(path, "rb") as fh:
         is_xml = fh.read(512).lstrip(b"\xef\xbb\xbf \t\r\n").startswith(b"<")
     lote_type = declared_lote_type(path, is_xml)
-    declared = annex_types().get(lote_type)
+    lotl = {t["profile"]: t for t in types_without_profile().values()}["LoTL"]
+    declared = annex_types().get(lote_type) or ("LoTL" if lote_type == lotl["uri"] else None)
+    what = lambda p: f"Annex {p}" if p != "LoTL" else f"the {lotl['name']}, which no annex covers"
+    flag = "--lotl" if profile == "LoTL" else f"--profile {profile}"
     warnings = []
-    if profile:
-        profile_why = f"--profile {profile}"
-        if declared and declared != profile:
-            warnings.append(f"The list declares LoTEType {lote_type} (Annex {declared}) but was checked against profile "
-                            f"{profile}. Did you mean --profile {declared}?")
-    elif profile is False:
-        profile, profile_why = None, "--no-profile"
-    else:
-        profile = declared
-        profile_why = (f"from its LoTEType {lote_type}" if declared else
-                       f"its LoTEType {lote_type} names no annex" if lote_type else "it has no LoTEType")
+    if profile is False:                                  # Python only (tests of the core rules): the track alone
+        profile, profile_why = None, "profile=False: the explicit track only"
+    elif declared:                                        # the list's own LoTEType decides; a differing flag is overridden
+        if profile and profile != declared:
+            warnings.append(f"{flag} ignored: the list declares LoTEType {lote_type}, {what(declared)}; checked against "
+                            f"profile {declared}.")
+        profile, profile_why = declared, f"from its LoTEType {lote_type}"
+    else:                                                 # missing, misspelt or unknown: no profile, whatever the flags
+        known = {**{u: a for u, a in annex_types().items()}, lotl["uri"]: "LoTL"}
+        raise ProfileError("invalid profile: " + (f"the list's LoTEType is \"{lote_type}\"" if lote_type else
+                                                  "the list has no LoTEType")
+                           + ". The profiles must be:\n" + "\n".join(f"  {a:5} {u}" for u, a in
+                                                                      sorted(known.items(), key=lambda x: x[1])))
+    annex = profile if profile and profile != "LoTL" else None
     tr = "explicit"
-    why = (f"profile {profile}: D.1-I.1 require a scheme explicit list" if profile else
+    why = (f"profile {annex}: D.1-I.1 require a scheme explicit list" if annex else
+           "profile LoTL: a WP4 list, explicit like the EU LoTL (project_decisions_vs_etsi.md #3)" if profile == "LoTL" else
            "--explicit" if track == "explicit" else "default: only the explicit track is published")
     C = Citations(tr)
     gen = TRACKS[tr]["gen"]
-    findings, corrected = validate_xml(path, profile, C, gen) if is_xml else (validate_json(path, profile, C, gen), False)
+    findings, corrected = validate_xml(path, annex, C, gen) if is_xml else (validate_json(path, annex, C, gen), False)
     return Report(path, tr, why, profile, findings, corrected, profile_why, declared, warnings)
 
 
@@ -655,15 +679,21 @@ def main(argv=None):
     ap.add_argument("list", help="the LoTE to validate (.xml or .json)")
     which = ap.add_mutually_exclusive_group()
     which.add_argument("--profile", choices=list("DEFGHI"),
-                       help="annex profile to apply (default: the annex the list's LoTEType names, if any)")
-    which.add_argument("--no-profile", action="store_true", help="apply no annex profile, only the explicit track")
+                       help="the annex profile expected; the list's LoTEType decides (a differing one is used, with a "
+                            "warning)")
+    which.add_argument("--lotl", action="store_true",
+                       help="expect a List of Trusted Lists (profile LoTL: explicit track, no annex; WP4); the list's "
+                            "LoTEType decides, as for --profile")
     ap.add_argument("--explicit", action="store_true",
-                    help="validate as a scheme-explicit list (Table 1, explicit column); the default and only track")
+                    help="temporarily not in use: only the explicit track is used")
     ap.add_argument("--json", action="store_true", help="print the findings as JSON")
     a = ap.parse_args(argv)
     if not os.path.isfile(a.list):
         ap.error(f"no such file: {a.list}")
-    r = validate(a.list, False if a.no_profile else a.profile, "explicit" if a.explicit else None)
+    try:
+        r = validate(a.list, "LoTL" if a.lotl else a.profile, "explicit" if a.explicit else None)
+    except ProfileError as e:
+        ap.error(str(e))
     if a.json:
         print(json.dumps(r.to_dict(), indent=2, ensure_ascii=False))
     else:

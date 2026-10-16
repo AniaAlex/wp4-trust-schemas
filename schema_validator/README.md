@@ -7,9 +7,9 @@ Validates lists of trusted entities (ETSI TS 119 602 V1.1.1, LoTE), in XML or JS
 ```bash
 pip install -e ".[dev]"
 
-lote-validate list.json                   # explicit track + the annex the list's LoTEType names (D-I), if any
-lote-validate list.json --profile D       # explicit track + Annex D (PID providers), whatever the list declares
-lote-validate list.xml --no-profile       # explicit track only (Table 1, explicit column)
+lote-validate list.json                   # explicit track + the annex profile the list's LoTEType names (D-I)
+lote-validate list.json --profile D       # expect Annex D: a warning if the list declares another profile
+lote-validate lotl.json --lotl            # expect a List of Trusted Lists (profile LoTL)
 lote-validate list.xml --profile H --json # machine-readable: {"track", "profile", "profile_reason", "declared_profile",
                                           #                   "warnings", "findings", ...}
 ```
@@ -17,7 +17,7 @@ lote-validate list.xml --profile H --json # machine-readable: {"track", "profile
 ```python
 from lote_schema_validator import validate
 
-report = validate("list.json")                  # profile=None: from the LoTEType; "D": Annex D; False: none
+report = validate("list.json")                  # the profile its LoTEType names; ProfileError if none can be chosen
 report.valid, report.track, report.profile, report.profile_reason, report.warnings
 for f in report.findings:
     print(f.layer, f.rule, f.location, f.message, f.source)   # source: ref, page, line, quote
@@ -25,12 +25,16 @@ for f in report.findings:
 
 Exit code of `lote-validate`: `0` valid, `1` failures, `2` usage error.
 
-**Which profile is applied.** Each annex fixes the list's `LoTEType` (Tables D.1–I.1, e.g. `http://uri.etsi.org/19602/LoTEType/EUPIDProvidersList` for D). Without `--profile`, `lote-validate` applies the annex whose `LoTEType` the list declares, and says so in the first line of the report (`profile D (from its LoTEType …)`); a list whose `LoTEType` names no annex, or that has none, is checked against the explicit track only. `--no-profile` forces the track only. When `--profile` names another annex than the list declares, the profile is still applied, and the report starts with a warning:
+**Which profile is applied.** Every list is checked against the profile its `LoTEType` names, which must be exactly one of seven URIs: the six annex types fixed in Tables D.1–I.1 (e.g. `http://uri.etsi.org/19602/LoTEType/EUPIDProvidersList` for D), or the List of Trusted Lists type (profile `LoTL`, a WP4 value). The first line of the report says which (`profile D (from its LoTEType …)`). `--profile` and `--lotl` only state which profile you expect; the list's `LoTEType` decides.
 
-```
-list.json: explicit track (...), profile E (--profile E) - 7 failure(s)
-WARNING: The list declares LoTEType http://uri.etsi.org/19602/LoTEType/EUPIDProvidersList (Annex D) but was checked against profile E. Did you mean --profile D?
-```
+| The list's `LoTEType` | Flag | Result |
+|---|---|---|
+| one of the six annex types (exact) | none | that annex's profile |
+| one of the six annex types | another annex, or `--lotl` | **the declared annex**, and a warning: `--profile E ignored: the list declares LoTEType …, Annex D` |
+| `http://uri.etsi.org/19602/LoTLType/EUListOfTrustedLists` (List of Trusted Lists, WP4) | none, `--lotl`, or a `--profile` overridden with a warning | profile `LoTL`: the explicit track only, no annex covers it ([decisions #3](../docs/project_decisions_vs_etsi.md#3-wp4-lists-are-explicit-the-implicit-track-is-not-used-in-wp4)) |
+| anything else: missing, misspelt, unknown | any, including `--profile X` or `--lotl` | **invalid profile (exit 2):** `error: invalid profile: the list's LoTEType is "…". The profiles must be:` followed by the seven URIs (D–I and LoTL) |
+
+The LoTL type is not in TS 119 602; it is listed in the explicit model (`lote_types_without_profile`, `"from": "wp4"`). In Python, `validate(path, profile=False)` checks the explicit track alone (used by the tests of the core rules).
 
 Every list is validated as a **scheme explicit** list: WP4 lists are explicit, and the implicit track is frozen and not published ([project_decisions_vs_etsi.md](../docs/project_decisions_vs_etsi.md) #3, #4). A list without the scheme information fails with the Table 1 rules (`EXP-SchemeName-required`, …); it is never accepted as an implicit list.
 
