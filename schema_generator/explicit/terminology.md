@@ -60,7 +60,7 @@ A component and its structure often share a name (`SchemeOperatorAddress`, `List
 - **Defined once, referenced by name.** The file is flat: every structure sits directly under `"structures"` and is never written inside another one. The tree emerges from the references, starting at `"root": "LoTE"`.
 - **A referenced structure must exist.** A misspelt name stops the build.
 - **Sharing is allowed.** `PostalAddress` and `ServiceDigitalIdentity` are used by three components each.
-- **No loops.** No structure contains itself, directly or through others; every chain ends in value types. The model is a directed acyclic graph (DAG), not a tree.
+- **No loops.** No structure contains itself, directly or through others; every chain ends in value types. Why this makes the model a directed acyclic graph, not a tree: [README, Concepts](../../README.md#concepts).
 - **Two exceptions.** `LoTE` is a structure but no component: it is the root. `AssociatedBody` is held by no component: it is reached through the `OtherAssociatedBodies` extension.
 
 **Why flat.** A shared structure is changed in one place; each structure matches one clause of the text, which refers to definitions the same way ("formatted as specified in clause 6.6.3", 6.3.13 b); and each structure becomes one `$defs` entry in JSON Schema and one `complexType` in XSD.
