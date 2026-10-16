@@ -36,6 +36,50 @@ cd ../schema_validator && ../.venv/bin/pytest
 
 After a change to the model or the generator: `lote-schemas build --publish`, then run both test suites. The validator's `test_published_schemas_are_current` fails when its schemas are older than the generator's output.
 
+## Profiles
+
+TS 119 602 defines six EU profiles, Annexes D–I. Each narrows the explicit track: fixed URIs, required and prohibited components, extra rules. A list names its profile by its `LoTEType`; validate it with `lote-validate <list> --profile <annex>`.
+
+| Annex | List of | `LoTEType` | Binding the annex allows | Validate | Files |
+|---|---|---|---|---|---|
+| D | providers of person identity data (PID) | `http://uri.etsi.org/19602/LoTEType/EUPIDProvidersList` | JSON | `.venv/bin/lote-validate list.json --profile D` | `D_pid_providers` |
+| E | wallet providers | `…/LoTEType/EUWalletProvidersList` | JSON | `.venv/bin/lote-validate list.json --profile E` | `E_wallet_providers` |
+| F | providers of wallet relying party access certificates (WRPAC) | `…/LoTEType/EUWRPACProvidersList` | JSON | `.venv/bin/lote-validate list.json --profile F` | `F_wrpac_providers` |
+| G | providers of wallet relying party registration certificates (WRPRC) | `…/LoTEType/EUWRPRCProvidersList` | JSON | `.venv/bin/lote-validate list.json --profile G` | `G_wrprc_providers` |
+| H | public sector bodies issuing electronic attestation of attributes (Pub-EAA) | `…/LoTEType/EUPubEAAProvidersList` | JSON or XML | `.venv/bin/lote-validate list.json --profile H`<br>`.venv/bin/lote-validate list.xml --profile H` | `H_pub_eaa_providers` |
+| I | registrars and registers | `…/LoTEType/EURegistrarsAndRegistersList` | JSON | `.venv/bin/lote-validate list.json --profile I` | `I_registrars_and_registers` |
+| – | List of Trusted Lists (no annex) | – | – | `.venv/bin/lote-validate list.json --explicit` | – |
+
+- **Files:** each profile is an overlay in [schema_generator/explicit/model/profiles/](schema_generator/explicit/model/profiles/) (`<name>.json`), generated into [schema_generator/explicit/generated/profiles/](schema_generator/explicit/generated/profiles/) as `lote_profile_<name>.json` (JSON Schema) and `.sch` (Schematron).
+- **XML for D–G and I:** the annexes allow only JSON, but XML profiles are generated for all six, as content checks ([decisions #1](docs/project_decisions_vs_etsi.md#1-xml-profiles-for-annexes-that-allow-only-json)).
+- **No profile:** the List of Trusted Lists has no annex; validate it with `--explicit` ([decisions #3](docs/project_decisions_vs_etsi.md#3-wp4-lists-are-explicit-the-implicit-track-is-not-used-in-wp4)).
+
+## Commands
+
+Run from the repository root after the Quick start install. Every command has `--help`.
+
+**`lote-validate <list>`**: validate a list (`.xml` or `.json`). Exit code 0 if valid, 1 if there are findings.
+
+| Flag | Effect |
+|---|---|
+| `--profile {D,E,F,G,H,I}` | also apply the annex profile (implies `--explicit`) |
+| `--explicit` | validate as an explicit list (Table 1, explicit column); the default and only track |
+| `--json` | print the findings as JSON instead of text |
+
+```bash
+.venv/bin/lote-validate list.json --profile D --json > report.json
+```
+
+**`lote-schemas`** (generator; run inside `schema_generator/`):
+
+| Command | Effect |
+|---|---|
+| `lote-schemas build` | run the whole generation chain: base, explicit and implicit schemas, the D–I profiles |
+| `lote-schemas build --publish` | then copy the explicit track into the validator package (use after every model change) |
+| `lote-schemas build --quiet` | the same, with less output |
+| `lote-schemas publish [--to DIR]` | only copy the generated schemas (default: the validator package) |
+| `lote-schemas check <schemas…> [--scheme explicit\|implicit] [--model M] [--json] [--show-ok]` | check an XSD or JSON Schema, e.g. Forge's, against the requirements of the model; `--show-ok` also lists the components that match |
+
 ## Rules of the project
 
 - **The text comes first.** Every rule in the schemas carries a verbatim quote of TS 119 602 (clause or annex row, page, line), proofread against [docs/spec/](docs/spec/). The models are written by hand; the schemas are generated from them.
