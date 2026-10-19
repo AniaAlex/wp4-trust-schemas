@@ -76,6 +76,21 @@ TS 119 602 defines six EU profiles, Annexes D–I. Each narrows the explicit tra
 - **XML for D–G and I:** the annexes allow only JSON, but XML profiles are generated for all six, as content checks ([decisions #1](docs/project_decisions_vs_etsi.md#1-xml-profiles-for-annexes-that-allow-only-json)).
 - **The List of Trusted Lists (profile `LoTL`):** no annex covers it, so a list with its `LoTEType` (a WP4 value, not in the text) is checked against the explicit track only. Any other `LoTEType`, or none, is an invalid profile: validation stops and lists the seven valid URIs ([decisions #3](docs/project_decisions_vs_etsi.md#3-wp4-lists-are-explicit-the-implicit-track-is-not-used-in-wp4)).
 
+## Model ids
+
+Every id leads to the sentence of the text it comes from. The prefix names the layer of the model that defines it.
+
+| Prefix | Layer | Where it is defined | Form | Example |
+|---|---|---|---|---|
+| `R-` | core rule: holds for every LoTE, explicit or implicit | `constraint` (`key`) in the base model, copied into each track | `R-<Name>` | `R-English`, `R-StatusWithHistory` |
+| `EXP-` | explicit track: what Table 1 (6.3.0) changes for a scheme explicit list | `scheme` (`id`) on a component of the explicit model | `EXP-<Component>-required\|prohibited` | `EXP-SchemeName-required`, `EXP-NextUpdate-prohibited` |
+| `IMP-` | implicit track (frozen, not published) | `scheme` (`id`) on a component of the implicit model | `IMP-<Component>-prohibited` | `IMP-SchemeName-prohibited` |
+| `D-` … `I-` | annex profile | element `id` or constraint `key` in [explicit/model/profiles/](schema_generator/explicit/model/profiles/) | `<annex>-<component>-required\|prohibited\|fixed\|values`, or a constraint key | `D-LoTEType-fixed`, `D-te-tel`, `H-sig-ref-uri` |
+| (clause) | source of a component in the text | `source.id` on each component | `<clause>/<Name>` | `6.6.1/ServiceTypeIdentifier` |
+| (structure) | XSD or JSON Schema error, mapped back to the model by the validator | derived, not stored | `<Structure>-<Component>-<what is wrong>` | `LoTE-LoTETag-required`, `PostalAddress-Country-required` |
+
+- **Where the ids are listed:** the `R-` rules in [base/model/README.md](schema_generator/base/model/README.md), the profile fields and their ids in the same file (Semantics), and the ids as the validator reports them in [schema_validator/README.md](schema_validator/README.md#rule-ids).
+
 ## Commands
 
 Run from the repository root after the Quick start install. Every command has `--help`.
