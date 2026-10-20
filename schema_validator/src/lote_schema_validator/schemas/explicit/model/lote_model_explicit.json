@@ -9,7 +9,29 @@
     "occurrence": "min/max per component; max 'n' = unbounded. 'items' describes a list component: the component itself holds a non-empty sequence of items.",
     "content": "sequence: components in order; choice: exactly one component; any-of: at least one component.",
     "tie_break": "Where the text contradicts itself, JSON follows the Forge JSON name and XML the Forge XML name.",
-    "constraints": "Rules across components are 'constraint' entries on the structure they constrain, in the format of the profile overlays (FHIR invariant: key, severity, human, expression; plus clause, checkable and check). A constraint with a 'check' is enforced by the generated schemas; one without is a rules-layer requirement."
+    "constraints": "Rules across components are 'constraint' entries on the structure they constrain, in the format of the profile overlays (FHIR invariant: key, severity, human, expression; plus clause, checkable and check). A constraint with a 'check' is enforced by the generated schemas; one without is a rules-layer requirement, and 'components' names the components of its structure it is about.",
+    "checkable": "checkable = {status, instrument, reason, note}, every field present, null where it does not apply. status: yes when code can decide the rule from the list alone, no otherwise. instrument: per binding, {xml, json}, each one of checkable_instruments: what checks a yes rule, or the part of a no rule its 'check' covers ('not-applicable' where the rule does not exist in that binding); null for a no rule without a check. reason (one of checkable_reasons): why a no rule cannot be decided from the list; null for yes. note: detail, or null."
+  },
+  "checkable_reasons": {
+    "official-records": "needs official records (business or company registers) to confirm a name or registration",
+    "operational-process": "describes what the scheme operator does over time, not what one list contains",
+    "page-content": "depends on the content of a page the list points to",
+    "list-history": "needs the earlier instances of the list",
+    "previous-list": "needs the previous instance of the list",
+    "certificate-parsing": "needs the certificates in the list parsed and their content compared",
+    "register-data": "needs the data of the register the list points to",
+    "official-journal": "needs the publication in the Official Journal of the EU",
+    "where-applicable": "applies only 'where applicable', and the list does not say whether it applies",
+    "external-approvals": "depends on approvals recorded outside the list",
+    "publication-url": "needs the URL the list was published at",
+    "pki-usage": "the list does not state whether the service uses PKI"
+  },
+  "checkable_instruments": {
+    "json-schema": "the generated JSON Schema",
+    "schematron": "the generated Schematron (XML)",
+    "code": "the validator's code, for a check the schema language cannot express (comparing dates in JSON)",
+    "signature-verifier": "a signature verifier (JAdES / XAdES), which this project does not have yet",
+    "not-applicable": "the rule does not exist in this binding"
   },
   "root": "LoTE",
   "lote_types_without_profile": [
@@ -1032,7 +1054,15 @@
           "severity": "error",
           "human": "Every multilingual sequence contains an entry with language 'en' (interpretation 2).",
           "expression": "descendants().where(children().lang.exists()).all(children().where(lang = 'en').exists())",
-          "checkable": "yes",
+          "checkable": {
+            "status": "yes",
+            "instrument": {
+              "xml": "schematron",
+              "json": "json-schema"
+            },
+            "reason": null,
+            "note": null
+          },
           "clause": "6.1.4",
           "check": {
             "type": "has-entry",
@@ -1075,7 +1105,15 @@
           "severity": "error",
           "human": "TrustedEntitiesList is present exactly when one or more entities are or were approved.",
           "expression": null,
-          "checkable": "no: depends on approvals outside the list",
+          "checkable": {
+            "status": "no",
+            "instrument": null,
+            "reason": "external-approvals",
+            "note": null
+          },
+          "components": [
+            "TrustedEntitiesList"
+          ],
           "clause": "6.4.0",
           "source": null,
           "citation": {
@@ -1089,7 +1127,18 @@
           "severity": "error",
           "human": "The list is signed with an AdES digital signature at conformance level baseline B, within the list (Signature component) or encapsulating it.",
           "expression": null,
-          "checkable": "yes: by a signature validator (not built yet; not schema-based)",
+          "checkable": {
+            "status": "yes",
+            "instrument": {
+              "xml": "signature-verifier",
+              "json": "signature-verifier"
+            },
+            "reason": null,
+            "note": "not schema-based"
+          },
+          "components": [
+            "Signature"
+          ],
           "clause": "6.8.0",
           "source": null,
           "citation": {
@@ -1103,7 +1152,18 @@
           "severity": "error",
           "human": "The signing certificate's C and O attributes match SchemeTerritory and one SchemeOperatorName value.",
           "expression": null,
-          "checkable": "yes: by a signature validator (not built yet), from the signing certificate",
+          "checkable": {
+            "status": "yes",
+            "instrument": {
+              "xml": "signature-verifier",
+              "json": "signature-verifier"
+            },
+            "reason": null,
+            "note": "from the signing certificate"
+          },
+          "components": [
+            "Signature"
+          ],
           "clause": "6.8.0",
           "source": null,
           "citation": {
@@ -1593,7 +1653,15 @@
           "severity": "error",
           "human": "LoTESequenceNumber starts at 1 and increases with every release.",
           "expression": null,
-          "checkable": "partly: needs the previous list",
+          "checkable": {
+            "status": "no",
+            "instrument": null,
+            "reason": "previous-list",
+            "note": null
+          },
+          "components": [
+            "LoTESequenceNumber"
+          ],
           "clause": "6.3.2",
           "source": null,
           "citation": {
@@ -1607,7 +1675,18 @@
           "severity": "error",
           "human": "NextUpdate (when not null) lies after ListIssueDateTime.",
           "expression": null,
-          "checkable": "yes: date comparison (not generated yet)",
+          "checkable": {
+            "status": "yes",
+            "instrument": {
+              "xml": "schematron",
+              "json": "code"
+            },
+            "reason": null,
+            "note": "not generated yet"
+          },
+          "components": [
+            "NextUpdate"
+          ],
           "clause": "6.3.15",
           "source": null,
           "citation": {
@@ -2227,7 +2306,18 @@
           "severity": "error",
           "human": "ServiceHistory instances are in descending order of status change date-time.",
           "expression": null,
-          "checkable": "yes: date comparison across history instances (not generated yet)",
+          "checkable": {
+            "status": "yes",
+            "instrument": {
+              "xml": "schematron",
+              "json": "code"
+            },
+            "reason": null,
+            "note": "across the history instances; not generated yet"
+          },
+          "components": [
+            "ServiceHistory"
+          ],
           "clause": "6.4.4",
           "source": null,
           "citation": {
@@ -2829,7 +2919,15 @@
           "severity": "error",
           "human": "If HistoricalInformationPeriod is present with a non-zero value, every ServiceInformation contains ServiceStatus.",
           "expression": "%resource.ListAndSchemeInformation.HistoricalInformationPeriod >= 1 implies ServiceStatus.exists()",
-          "checkable": "yes",
+          "checkable": {
+            "status": "yes",
+            "instrument": {
+              "xml": "schematron",
+              "json": "json-schema"
+            },
+            "reason": null,
+            "note": null
+          },
           "clause": "6.6.0",
           "check": {
             "type": "required-if",
@@ -2859,7 +2957,15 @@
           "severity": "error",
           "human": "StatusStartingTime of a new current status is not before the list's (re)issuance.",
           "expression": null,
-          "checkable": "partly: needs the previous list",
+          "checkable": {
+            "status": "no",
+            "instrument": null,
+            "reason": "previous-list",
+            "note": null
+          },
+          "components": [
+            "StatusStartingTime"
+          ],
           "clause": "6.6.5",
           "source": null,
           "citation": {
@@ -3043,7 +3149,12 @@
           "severity": "error",
           "human": "A PKI-based service identity contains an X509Certificate or an X509SKI (6.6.0 says: at least one X509Certificate).",
           "expression": null,
-          "checkable": "partly: whether PKI is used is not stated in the list",
+          "checkable": {
+            "status": "no",
+            "instrument": null,
+            "reason": "pki-usage",
+            "note": null
+          },
           "clause": "6.6.3.0",
           "source": null,
           "citation": {

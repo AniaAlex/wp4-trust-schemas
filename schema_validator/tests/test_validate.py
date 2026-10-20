@@ -328,3 +328,42 @@ def test_wp4_signature_structure_in_d(tmp_path, what, changes, rule):
 def test_d_xml_signature_stays_optional_and_conforming_one_passes(tmp_path):
     assert validate(DATA / "D_pid_providers.xml").valid                                   # no ds:Signature: no finding
     assert validate(_signed(tmp_path, "D_pid_providers.xml", [], add_signature=True)).valid  # the H.4 form passes
+
+
+# ------------------------------------------------------------------ not checked: the rules-layer requirements
+def test_not_checked_lists_the_rules_layer_with_their_fields():
+    r = validate(DATA / "D_pid_providers.json")
+    nc = {n.rule: n for n in r.not_checked}
+    assert {"D-te-name", "D-removal", "R-SequenceIncrease", "R-Signed", "D-sig"} <= set(nc)
+    assert not {"R-English", "R-StatusWithHistory"} & set(nc)            # they have a check
+    n = nc["D-te-name"]
+    assert (n.status, n.reason) == ("no", "official-records") and n.reason_text and n.source["quote"]
+    assert n.occurrences == [{"location": "/LoTE/TrustedEntitiesList/0/TrustedEntityInformation/TEName",
+                              "value": "en: Provider BE"}]
+    assert not nc["R-Signed"].in_json                                   # a JSON list is signed by encapsulation
+    assert not nc["D-removal"].occurrences                              # the sample has no ServiceStatus
+    assert (nc["D-ptr-self"].instrument, nc["D-ptr-self"].reason) == ("json-schema", "publication-url")  # in part
+    assert (nc["R-Signed"].instrument, nc["R-Signed"].reason) == ("signature-verifier", None)
+    assert nc["R-NextUpdateAfterIssue"].instrument == "code"                            # the JSON side of a date check
+    assert [n.status for n in r.not_checked] == sorted((n.status for n in r.not_checked),
+                                                       key=["no", "yes"].index)
+    for n in r.not_checked:
+        assert n.status == "yes" or n.reason, n.rule
+
+
+def test_not_checked_in_xml():
+    nc = {n.rule: n for n in validate(DATA / "H_pub_eaa_providers.xml").not_checked}
+    assert nc["H-te-name"].occurrences[0]["location"] == \
+        "/lote:ListOfTrustedEntities/lote:TrustedEntitiesList/lote:TrustedEntity/lote:TrustedEntityInformation/lote:TEName"
+    assert nc["R-NextUpdateAfterIssue"].occurrences[0]["value"] == "2026-05-01T10:00:00Z"   # inside NextUpdate/dateTime
+    assert nc["R-Signed"].occurrences[0]["location"] == "/lote:ListOfTrustedEntities/ds:Signature"
+    assert (nc["R-NextUpdateAfterIssue"].instrument, nc["H-sig"].instrument) == ("schematron", "signature-verifier")
+
+
+def test_not_checked_in_the_reports(capsys):
+    main([str(DATA / "D_pid_providers.json")])
+    out = capsys.readouterr().out
+    assert "Not checked (" in out and "D-te-name  [official-records:" in out
+    main([str(DATA / "D_pid_providers.json"), "--json"])
+    rules = {n["rule"] for n in json.loads(capsys.readouterr().out)["not_checked"]}
+    assert "D-te-name" in rules

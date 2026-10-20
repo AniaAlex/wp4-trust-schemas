@@ -116,6 +116,14 @@ def citation(e):
     return f"{e['row']} (p. {c.get('page')}, line {c.get('line')}): \"{c.get('quote')}\""
 
 
+def checkable_text(ck):
+    """A checkable entry ({status, instrument, reason, note}) as text: 'yes, by xml: schematron, json: code',
+    'no: list-history', 'no: page-content, part by xml: schematron, json: json-schema (note)'."""
+    by = ck["instrument"] and ", ".join(f"{b}: {i}" for b, i in ck["instrument"].items())
+    inst = by and (", part" if ck["status"] == "no" else ",") + f" by {by}"
+    return ck["status"] + (f": {ck['reason']}" if ck["reason"] else "") + (inst or "") + (f" ({ck['note']})" if ck["note"] else "")
+
+
 def months_after(m, b, n):
     """XPath 1.0: date-time m (YYYY-MM-DDThh:mm:ssZ), when present, is at most n months after b. Months are compared as
     year*12 + month; in the same month the rest (day and time) decides, so 31 Aug + 6 months allows up to the end of Feb."""
@@ -350,7 +358,7 @@ def main():
             js.apply(e)
             sch.apply(e)
             for c in e.get("constraint", []):
-                item = f"{c['key']}: {c['human']} [checkable: {c['checkable']}] {citation(e)}"
+                item = f"{c['key']}: {c['human']} [checkable: {checkable_text(c['checkable'])}] {citation(e)}"
                 if not c.get("check"):
                     business.append(item)
                 elif c["check"]["type"] in SCH_ONLY:

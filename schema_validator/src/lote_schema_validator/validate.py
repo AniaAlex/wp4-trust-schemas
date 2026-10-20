@@ -37,6 +37,9 @@ Rule ids and citations:
                     A component the track requires or forbids (Table 1 / 6.3.0) uses the rule of its 'scheme' instead:
                     EXP-SchemeName-required, EXP-NextUpdate-prohibited (a forbidden component has max 0).
 Signatures are not validated here (JAdES / XAdES, see the annexes' x.4).
+Not checked: after the findings, the rules of the model without a 'check' (the explicit model's and the applied annex's),
+each with its checkable status and reason (the model's checkable_reasons), its citation, and where its field occurs in the
+list with the value.
 
 Exit code: 0 if valid, 1 if any failure, 2 on usage errors.
 """
@@ -578,7 +581,209 @@ def declared_lote_type(path, is_xml):
     return v.strip() if isinstance(v, str) and v.strip() else None
 
 
+# ------------------------------------------------------------------ not checked: the rules-layer requirements
+@dataclass
+class NotChecked:
+    """A rule of the model that no check here enforces in full (a constraint without 'check', or one that cannot be
+    decided from the list), with what checking it needs and where its field occurs in the list."""
+    rule: str
+    human: str
+    status: str                                           # checkable status: yes (not built here) / no
+    instrument: str = None                                # for the list's binding, a key of checkable_instruments:
+                                                          # what checks it (for a no rule: the part it checks)
+    instrument_text: str = ""
+    reason: str = None                                    # a key of the model's checkable_reasons
+    reason_text: str = ""
+    note: str = None
+    model_path: str = ""                                  # the model path(s) of the field(s) the rule is about
+    in_json: bool = True                                  # False: the field is not part of the JSON binding
+    occurrences: list = field(default_factory=list)       # [{"location", "value"}] in the list
+    source: dict = field(default_factory=dict)
+
+
+STATUS_ORDER = {"no": 0, "yes": 1}
+
+
+def model_target(C, path):
+    """(owner structure, component, sub-path) of a model path such as LoTE.TrustedEntitiesList.TrustedEntity.
+    TrustedEntityInformation.TEName; sub-path: the names inside a value (an extension, e.g. ServiceUniqueIdentifier)."""
+    segs = [s for s in path.split(".")[1:] if s not in ("uriValue", "value")]
+    struct, comp, items = C.root, None, None
+    for i, s in enumerate(segs):
+        if items is not None:                             # the item of a list component (TrustedEntity)
+            struct, items, comp = items.get("structure"), None, None
+            continue
+        comp = next(c for c in C.S[struct]["components"] if c["name"] == s)
+        if not comp.get("structure") and not (comp.get("items") or {}).get("structure"):
+            return struct, comp, segs[i + 1:]
+        if i < len(segs) - 1:
+            struct, items = (comp["structure"], None) if comp.get("structure") else (struct, comp["items"])
+    return struct, comp, []
+
+
+def short(v, n=100):
+    """A value of the list in one short line."""
+    if isinstance(v, list) and v and all(isinstance(x, dict) and "lang" in x for x in v):
+        v = "; ".join(f"{x['lang']}: {x.get('value') or x.get('uriValue') or '…'}" for x in v)
+    elif isinstance(v, (dict, list)):
+        v = f"present ({len(v)} item(s))" if isinstance(v, list) else "present"
+    s = " ".join(str(v).split())
+    return s if len(s) <= n else s[:n - 1] + "…"
+
+
+def is_hit(n, owner, comp):
+    """Whether model place n is the target: component comp of structure owner, or (comp None) a structure owner."""
+    if comp is None:
+        return n.kind == "struct" and n.struct == owner
+    return n.kind in ("leaf", "list", "struct", "wrapper") and n.owner == owner and n.comp and n.comp["name"] == comp["name"]
+
+
+def json_occurrences(C, doc, owner, comp, sub):
+    out = []
+
+    def walk(v, node, loc):
+        items = v.items() if isinstance(v, dict) else enumerate(v) if isinstance(v, list) else ()
+        for k, x in items:
+            n = C.json_child(node, k)
+            if n is None:
+                continue
+            here = f"{loc}/{k}"
+            if is_hit(n, owner, comp):
+                out.extend(json_sub(x, here, sub))
+            elif n.kind != "leaf":
+                walk(x, n, here)
+    walk(doc, Node("doc", name="(document)"), "")
+    return out
+
+
+def json_sub(v, loc, sub):
+    """The occurrences of sub-path sub (names inside a value, e.g. an extension) in v, or v itself."""
+    if not sub:
+        return [{"location": loc, "value": short(v)}]
+    out = []
+    items = v.items() if isinstance(v, dict) else enumerate(v) if isinstance(v, list) else ()
+    for k, x in items:
+        out.extend(json_sub(x, f"{loc}/{k}", sub[1:]) if k == sub[0] else
+                   json_sub(x, f"{loc}/{k}", sub) if isinstance(x, (dict, list)) else [])
+    return out
+
+
+def xml_value(el):
+    kids = [k for k in el if isinstance(k.tag, str)]
+    lang = "{http://www.w3.org/XML/1998/namespace}lang"
+    if kids and all(k.get(lang) for k in kids):
+        return short("; ".join(f"{k.get(lang)}: {' '.join(k.itertext()).strip()}" for k in kids))
+    if len(kids) == 1 and not len(kids[0]):               # a value in a helper element (NextUpdate/dateTime)
+        return short(kids[0].text or "")
+    return short(el.text or "") if not kids else "present"
+
+
+def xml_step(el):
+    ns = re.match(r"\{([^}]*)\}", el.tag)
+    name = f"{PREFIX.get(ns.group(1), 'lote') if ns else ''}{':' if ns else ''}{local(el.tag)}"
+    same = [s for s in el.getparent() if s.tag == el.tag] if el.getparent() is not None else [el]
+    return name + (f"[{same.index(el) + 1}]" if len(same) > 1 else "")
+
+
+def xml_occurrences(C, root, owner, comp, sub):
+    out = []
+    path = lambda el: "/" + "/".join(xml_step(a) for a in reversed([el] + list(el.iterancestors())))
+    if comp is not None and is_attribute(comp):
+        name = comp["xml"]["form"].split()[-1] if " " in comp["xml"]["form"] else comp["name"]
+        return [{"location": path(root) + f"/@{name}", "value": short(root.get(name))}] \
+            if owner == C.root and root.get(name) is not None else []
+
+    def walk(el, node):
+        for ch in el:
+            if not isinstance(ch.tag, str):
+                continue
+            n = C.xml_child(node, local(ch.tag))
+            if n is None:
+                continue
+            if is_hit(n, owner, comp):
+                hits = [ch] if not sub else [d for d in ch.iter() if isinstance(d.tag, str) and local(d.tag) == sub[-1]]
+                out.extend({"location": path(h), "value": xml_value(h)} for h in hits)
+            elif n.kind != "leaf":
+                walk(ch, n)
+    walk(root, Node("struct", C.root, None, None, local(root.tag)))
+    return out
+
+
+def not_checked(C, annex, path, is_xml):
+    """The rules of the explicit model and of the applied annex that no check enforces in full: the rules-layer
+    requirements (no 'check') and the 'no' rules a check covers only in part, each with where its field occurs in the
+    list."""
+    checked = lambda c: c.get("check") and c["checkable"]["status"] == "yes"
+    rules = []                                            # (rule, checkable, [(owner, comp, sub, field)], source)
+    for sname, st in C.S.items():
+        for c in st.get("constraint", []):
+            if checked(c):
+                continue
+            comps = [next(x for x in st["components"] if x["name"] == n) for n in c.get("components", [])]
+            targets = [(sname, x, [], f"{sname}.{x['name']}") for x in comps] or [(sname, None, [], sname)]
+            rules.append((c, targets, C.core_rule(c["key"])))
+    if annex:
+        for fn in glob.glob(os.path.join(OVERLAYS, f"{annex}_*.json")):
+            for e in json.load(open(fn, encoding="utf-8"))["differential"]["element"]:
+                for c in e.get("constraint", []):
+                    if not checked(c):
+                        owner, comp, sub = model_target(C, e["path"])
+                        rules.append((c, [(owner, comp, sub, e["path"])], C.profile(c["key"])))
+    try:
+        if is_xml:
+            from lxml import etree
+            doc = etree.parse(path, etree.XMLParser(resolve_entities=False, no_network=True)).getroot()
+        else:
+            doc = json.load(open(path, encoding="utf-8"))
+    except Exception:
+        doc = None                                        # unreadable: the findings say why; no occurrences
+    reasons, instruments = C.model.get("checkable_reasons", {}), C.model.get("checkable_instruments", {})
+    out = []
+    for c, targets, src in rules:
+        ck = c["checkable"]
+        inst = (ck["instrument"] or {}).get("xml" if is_xml else "json")
+        nc = NotChecked(c["key"], c["human"], ck["status"], inst, instruments.get(inst, ""),
+                        ck["reason"], reasons.get(ck["reason"], ""), ck["note"], ", ".join(t[3] for t in targets),
+                        source=src)
+        for owner, comp, sub, _ in targets:
+            if not is_xml and comp is not None and (comp.get("json") or {}).get("max") == "0":
+                nc.in_json = False
+            elif doc is not None:
+                nc.occurrences += (xml_occurrences if is_xml else json_occurrences)(C, doc, owner, comp, sub)
+        out.append(nc)
+    return sorted(out, key=lambda n: STATUS_ORDER[n.status])
+
+
 # ------------------------------------------------------------------ report
+NOT_CHECKED_HEADING = {"no": "cannot be decided from the list alone", "yes": "checkable, but not built here"}
+
+
+def not_checked_report(items, shown=3):
+    lines = [f"\nNot checked ({len(items)} rule(s) of the model no check here enforces):"]
+    status = None
+    for n in items:
+        if n.status != status:
+            status = n.status
+            lines.append(f"\n  -- {status}: {NOT_CHECKED_HEADING[status]}")
+        why = f"{n.reason}: {n.reason_text}" if n.reason else f"by {n.instrument}: {n.instrument_text}"
+        lines.append(f"\n  {n.rule}  [{why}]" + (f" ({n.note})" if n.note else ""))
+        if n.reason and n.instrument:
+            lines.append(f"    part  {n.instrument_text} checks what the list itself shows (a failure is in the findings above)")
+        lines.append(f"    rule  {n.human}")
+        s = n.source
+        if s.get("quote"):
+            lines.append(f"    spec  {s['ref']}, p. {s['page']}, line {s['line']}: \"{s['quote']}\"")
+        if not n.in_json:
+            lines.append(f"    in the list  {n.model_path}: not part of the JSON binding")
+        elif not n.occurrences:
+            lines.append(f"    in the list  {n.model_path}: not present")
+        for i, o in enumerate(n.occurrences[:shown]):
+            lines.append(f"    {'in the list' if i == 0 else '           '}  {o['location']}  {o['value']}")
+        if len(n.occurrences) > shown:
+            lines.append(f"                 … and {len(n.occurrences) - shown} more")
+    return lines
+
+
 def text_report(r):
     lines = [f"{r.path}: {r.track} track ({r.track_reason}), "
              + (f"profile {r.profile} ({r.profile_reason})" if r.profile else f"no profile ({r.profile_reason})")
@@ -602,7 +807,7 @@ def text_report(r):
             lines.append(f"  spec {s['ref']}, p. {s['page']}, line {s['line']}: \"{s['quote']}\"")
         elif s.get("ref"):
             lines.append(f"  spec {s['ref']}")
-    lines.append("\nNot checked here: the signature (JAdES / XAdES), and rules-layer items no program can check.")
+    lines += not_checked_report(r.not_checked)
     return "\n".join(lines)
 
 
@@ -618,6 +823,7 @@ class Report:
     profile_reason: str = ""                              # why: --profile, the list's LoTEType, or why none
     declared_profile: str = None                          # what the list's LoTEType names: annex letter, "LoTL", or None
     warnings: list = field(default_factory=list)          # [str], e.g. --profile differs from the declared annex
+    not_checked: list = field(default_factory=list)       # [NotChecked]: the rules-layer requirements, with their fields
 
     @property
     def valid(self):
@@ -627,7 +833,8 @@ class Report:
         return {"track": self.track, "track_reason": self.track_reason, "profile": self.profile,
                 "profile_reason": self.profile_reason, "declared_profile": self.declared_profile,
                 "warnings": self.warnings, "root_corrected": self.root_corrected,
-                "findings": [asdict(f) for f in self.findings]}
+                "findings": [asdict(f) for f in self.findings],
+                "not_checked": [asdict(n) for n in self.not_checked]}
 
 
 def validate(path, profile=None, track=None):
@@ -671,7 +878,8 @@ def validate(path, profile=None, track=None):
     C = Citations(tr)
     gen = TRACKS[tr]["gen"]
     findings, corrected = validate_xml(path, annex, C, gen) if is_xml else (validate_json(path, annex, C, gen), False)
-    return Report(path, tr, why, profile, findings, corrected, profile_why, declared, warnings)
+    return Report(path, tr, why, profile, findings, corrected, profile_why, declared, warnings,
+                  not_checked(C, annex, path, is_xml))
 
 
 def main(argv=None):

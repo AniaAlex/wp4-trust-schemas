@@ -33,7 +33,12 @@
             "severity": "error",
             "human": "The first instance of the list is issued with LoTESequenceNumber 1.",
             "expression": null,
-            "checkable": "partly: needs the list history"
+            "checkable": {
+              "status": "no",
+              "instrument": null,
+              "reason": "list-history",
+              "note": null
+            }
           }
         ],
         "citation": {
@@ -96,7 +101,15 @@
             "severity": "error",
             "human": "NextUpdate is at most 6 months after ListIssueDateTime.",
             "expression": "NextUpdate.empty() or NextUpdate <= ListIssueDateTime + 6 months",
-            "checkable": "yes: date arithmetic (Schematron; not expressible in JSON Schema)",
+            "checkable": {
+              "status": "yes",
+              "instrument": {
+                "xml": "schematron",
+                "json": "code"
+              },
+              "reason": null,
+              "note": null
+            },
             "check": {
               "type": "months-after",
               "component": "NextUpdate",
@@ -121,7 +134,12 @@
             "severity": "error",
             "human": "One URI where users can receive information about the list.",
             "expression": null,
-            "checkable": "no: content of the page"
+            "checkable": {
+              "status": "no",
+              "instrument": null,
+              "reason": "page-content",
+              "note": null
+            }
           }
         ],
         "citation": {
@@ -163,7 +181,12 @@
             "severity": "error",
             "human": "TEName is the (legal) name of the listed provider.",
             "expression": null,
-            "checkable": "no: needs official records"
+            "checkable": {
+              "status": "no",
+              "instrument": null,
+              "reason": "official-records",
+              "note": null
+            }
           }
         ],
         "citation": {
@@ -193,7 +216,12 @@
             "severity": "error",
             "human": "Includes the official registration identifier where one exists (organizationIdentifier / serialNumber semantics of ETSI EN 319 412-1).",
             "expression": null,
-            "checkable": "no: needs official records"
+            "checkable": {
+              "status": "no",
+              "instrument": null,
+              "reason": "official-records",
+              "note": null
+            }
           }
         ],
         "citation": {
@@ -212,7 +240,15 @@
             "severity": "error",
             "human": "One entry references the Union or national law: 'OJ:' + 'EU' or the ISO 3166-1 code of the Member State (Greece = GR, not EL: not denoted 'CC') + an identifier of the law.",
             "expression": "TETradeName.where(value.matches('^OJ:(EU|AT|BE|BG|CY|CZ|DE|DK|EE|GR|ES|FI|FR|HR|HU|IE|IT|LT|LU|LV|MT|NL|PL|PT|RO|SE|SI|SK).+$')).exists()",
-            "checkable": "yes",
+            "checkable": {
+              "status": "yes",
+              "instrument": {
+                "xml": "schematron",
+                "json": "json-schema"
+              },
+              "reason": null,
+              "note": null
+            },
             "check": {
               "type": "contains",
               "component": "TETradeName",
@@ -270,7 +306,15 @@
             "severity": "error",
             "human": "The electronic address contains a contact phone number (tel: URI).",
             "expression": "TEElectronicAddress.where(uriValue.startsWith('tel:')).exists()",
-            "checkable": "yes",
+            "checkable": {
+              "status": "yes",
+              "instrument": {
+                "xml": "schematron",
+                "json": "json-schema"
+              },
+              "reason": null,
+              "note": null
+            },
             "check": {
               "type": "contains",
               "component": "TEElectronicAddress",
@@ -299,7 +343,15 @@
             "severity": "error",
             "human": "The electronic address contains http://uri.etsi.org/19602/ListOfTrustedEntities/PubEAAProvider/CC for the responsible Member State ('CC' field: Greece = EL, clause 6.1.5). Placed here by Table H.2; the other annexes place it under TE information URI (etsi_defects.md #14).",
             "expression": "TEElectronicAddress.where(uriValue.matches('^http://uri\\\\.etsi\\\\.org/19602/ListOfTrustedEntities/PubEAAProvider/(AT|BE|BG|CY|CZ|DE|DK|EE|EL|ES|FI|FR|HR|HU|IE|IT|LT|LU|LV|MT|NL|PL|PT|RO|SE|SI|SK)$')).exists()",
-            "checkable": "yes",
+            "checkable": {
+              "status": "yes",
+              "instrument": {
+                "xml": "schematron",
+                "json": "json-schema"
+              },
+              "reason": null,
+              "note": null
+            },
             "check": {
               "type": "contains",
               "component": "TEElectronicAddress",
@@ -356,7 +408,15 @@
             "severity": "error",
             "human": "Because Table H.2 places the ETSI Member State URI in the electronic address, the web-site that clause 6.3.5.2 requires must be another http(s) URI.",
             "expression": "TEElectronicAddress.where(uriValue.matches('^https?://') and uriValue.startsWith('http://uri.etsi.org/19602/ListOfTrustedEntities/').not()).exists()",
-            "checkable": "yes",
+            "checkable": {
+              "status": "yes",
+              "instrument": {
+                "xml": "schematron",
+                "json": "json-schema"
+              },
+              "reason": null,
+              "note": null
+            },
             "check": {
               "type": "contains",
               "component": "TEElectronicAddress",
@@ -389,7 +449,12 @@
             "severity": "error",
             "human": "The URL of the page with policies, terms and conditions.",
             "expression": null,
-            "checkable": "no: content of the page"
+            "checkable": {
+              "status": "no",
+              "instrument": null,
+              "reason": "page-content",
+              "note": null
+            }
           }
         ],
         "citation": {
@@ -425,7 +490,12 @@
             "severity": "error",
             "human": "Multiple certificates all relate to the same public key and have identical subject names.",
             "expression": null,
-            "checkable": "partly: needs certificate parsing"
+            "checkable": {
+              "status": "no",
+              "instrument": null,
+              "reason": "certificate-parsing",
+              "note": null
+            }
           }
         ],
         "citation": {
@@ -444,7 +514,12 @@
             "severity": "error",
             "human": "Each certificate's subject has organizationName, strictly matching TEName.",
             "expression": null,
-            "checkable": "partly: needs certificate parsing"
+            "checkable": {
+              "status": "no",
+              "instrument": null,
+              "reason": "certificate-parsing",
+              "note": null
+            }
           }
         ],
         "citation": {
@@ -491,7 +566,12 @@
             "severity": "error",
             "human": "When an entity is no longer a provider, all its services are set to withdrawn.",
             "expression": null,
-            "checkable": "no: operational process"
+            "checkable": {
+              "status": "no",
+              "instrument": null,
+              "reason": "operational-process",
+              "note": null
+            }
           }
         ],
         "citation": {
@@ -510,7 +590,12 @@
             "severity": "error",
             "human": "The starting time of a new current status is not before the (re)issuance of the list.",
             "expression": null,
-            "checkable": "partly: needs the previous list"
+            "checkable": {
+              "status": "no",
+              "instrument": null,
+              "reason": "previous-list",
+              "note": null
+            }
           }
         ],
         "citation": {
@@ -572,7 +657,15 @@
               "human": "ds:SignedInfo has a ds:Reference with URI=\"\" (the entire document)",
               "expression": null,
               "xpath": "ds:SignedInfo/ds:Reference[@URI='']",
-              "checkable": "yes",
+              "checkable": {
+                "status": "yes",
+                "instrument": {
+                  "xml": "schematron",
+                  "json": "not-applicable"
+                },
+                "reason": null,
+                "note": "JSON: not applicable. A JSON list is signed by encapsulation (compact JAdES: the list is the payload of the JWS, 6.8.0), so it has no ds:Signature element and the signature covers the whole list by construction; its signature rules are the signature verifier's (x-sig)."
+              },
               "row": "H.4 Signature",
               "from": "text",
               "citation": {
@@ -587,7 +680,15 @@
               "human": "The ds:Reference with URI=\"\" has one ds:Transforms with two ds:Transform: enveloped-signature, then exclusive canonicalization",
               "expression": null,
               "xpath": "not(ds:SignedInfo/ds:Reference[@URI='']) or ds:SignedInfo/ds:Reference[@URI=''][count(ds:Transforms)=1][count(ds:Transforms/ds:Transform)=2][ds:Transforms/ds:Transform[1]/@Algorithm='http://www.w3.org/2000/09/xmldsig#enveloped-signature'][ds:Transforms/ds:Transform[2]/@Algorithm='http://www.w3.org/2001/10/xml-exc-c14n#']",
-              "checkable": "yes",
+              "checkable": {
+                "status": "yes",
+                "instrument": {
+                  "xml": "schematron",
+                  "json": "not-applicable"
+                },
+                "reason": null,
+                "note": "JSON: not applicable. A JSON list is signed by encapsulation (compact JAdES: the list is the payload of the JWS, 6.8.0), so it has no ds:Signature element and the signature covers the whole list by construction; its signature rules are the signature verifier's (x-sig)."
+              },
               "row": "H.4 Signature",
               "from": "text",
               "citation": {
@@ -602,7 +703,15 @@
               "human": "ds:SignedInfo is canonicalized with exclusive canonicalization",
               "expression": null,
               "xpath": "ds:SignedInfo/ds:CanonicalizationMethod/@Algorithm='http://www.w3.org/2001/10/xml-exc-c14n#'",
-              "checkable": "yes",
+              "checkable": {
+                "status": "yes",
+                "instrument": {
+                  "xml": "schematron",
+                  "json": "not-applicable"
+                },
+                "reason": null,
+                "note": "JSON: not applicable. A JSON list is signed by encapsulation (compact JAdES: the list is the payload of the JWS, 6.8.0), so it has no ds:Signature element and the signature covers the whole list by construction; its signature rules are the signature verifier's (x-sig)."
+              },
               "row": "H.4 Signature",
               "from": "text",
               "citation": {
@@ -621,7 +730,15 @@
             "severity": "error",
             "human": "Signed with a compact JAdES Baseline B signature (ETSI TS 119 182-1) when issued in JSON; in XML an enveloped XAdES Baseline B signature (H.4 1-4).",
             "expression": null,
-            "checkable": "yes: with a JAdES / XAdES verifier"
+            "checkable": {
+              "status": "yes",
+              "instrument": {
+                "xml": "signature-verifier",
+                "json": "signature-verifier"
+              },
+              "reason": null,
+              "note": null
+            }
           }
         ],
         "citation": {
