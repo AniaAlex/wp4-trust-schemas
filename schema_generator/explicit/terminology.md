@@ -216,7 +216,7 @@ Each entry of `constraint`:
 | `severity` | always `error`: every rule is a "shall" | FHIR `constraint.severity` |
 | `human` | the rule in words, used in messages | FHIR `constraint.human` |
 | `expression` | the rule in FHIRPath; `null` when no schema can check it | FHIR `constraint.expression` |
-| `checkable` | `yes` / `partly` / `no`, with the reason | project |
+| `checkable` | `{status, instrument, reason, note}`, `null` where not applicable: `status` yes when code can decide the rule from the list alone; `instrument` per binding `{xml, json}` from `checkable_instruments` (what checks it; `not-applicable` where the rule does not exist in the binding); `reason` from `checkable_reasons` (why not) | project |
 | `check` | the rule in a structured form the generator translates to JSON Schema and XPath: `contains`, `min-items`, `months-after` | project |
 | `xpath` | the rule as an XPath 1.0 test from the constrained element; only in an `xml.constraint` (XML only) | FHIR R4 `constraint.xpath` |
 | `row`, `citation` | the constraint's own annex row and sentence, when it is not the element's (e.g. `D-sig-ref-uri` cites H.4) | project |
