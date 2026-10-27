@@ -15,6 +15,8 @@ Translation of a differential element (path -> binding location):
   binding (required)         JSON: 'enum'                                    XML: assert the value is one of the set
   constraint with 'check'    JSON: 'contains' / 'minItems'                   XML: XPath assertion
   check 'months-after'       JSON: listed in $comment (no comparison)        XML: XPath 1.0 date comparison
+  check 'cert-...'           JSON and XML: listed as a rules-layer requirement with its check, run by the validator's code
+                             (the certificate is a base64 string to the schemas)
   xml.constraint (xpath)     JSON: none (XML binding only)                   XML: the constraint's XPath, from the element
                              (e.g. the H.4 2)-3) checks of ds:Signature; 'from': 'wp4' rules say so in their message)
   constraint without check   listed as a rules-layer requirement (JSON $comment and x-rules-layer, Schematron comment)
@@ -30,7 +32,7 @@ Rule ids: '<annex>-<component>-<required|prohibited|fixed|values>' for structura
 import argparse, json, os, re
 from xml.sax.saxutils import escape, quoteattr
 
-from .model import allowed
+from .model import CODE_ONLY, allowed
 from .paths import PROFILES_DIR, PROFILES_GEN, ROOT, SNAPSHOT  # noqa: F401
 
 MODEL = SNAPSHOT["explicit"]                                 # the profiles narrow the explicit track (x.1)
@@ -114,6 +116,14 @@ def what_text(e, what):
 def citation(e):
     c = e.get("citation") or {}
     return f"{e['row']} (p. {c.get('page')}, line {c.get('line')}): \"{c.get('quote')}\""
+
+
+def checkable_text(ck):
+    """A checkable entry ({status, instrument, reason, note}) as text: 'yes, by xml: schematron, json: code',
+    'no: list-history', 'no: page-content, part by xml: schematron, json: json-schema (note)'."""
+    by = ck["instrument"] and ", ".join(f"{b}: {i}" for b, i in ck["instrument"].items())
+    inst = by and (", part" if ck["status"] == "no" else ",") + f" by {by}"
+    return ck["status"] + (f": {ck['reason']}" if ck["reason"] else "") + (inst or "") + (f" ({ck['note']})" if ck["note"] else "")
 
 
 def months_after(m, b, n):
@@ -207,7 +217,7 @@ class JsonProfile:
             self.rule(parent, rid(e, "json-required"), f"{name} is required in JSON", eb, {"required": [name]})
         for c in e.get("constraint", []):
             ck = c.get("check")
-            if not ck or ck["type"] in SCH_ONLY:
+            if not ck or ck["type"] in SCH_ONLY + CODE_ONLY:
                 continue
             if ck["component"] == ".":
                 target = node
@@ -275,7 +285,7 @@ class SchProfile:
             self.add(c["key"], f"{ctx}/{rel}", c["xpath"], text, ce)
         for c in e.get("constraint", []):
             ck = c.get("check")
-            if not ck:
+            if not ck or ck["type"] in CODE_ONLY:
                 continue
             here = self.xpath(steps)
             add = lambda test: self.add(c["key"], here, test, c["human"], e)
@@ -350,8 +360,8 @@ def main():
             js.apply(e)
             sch.apply(e)
             for c in e.get("constraint", []):
-                item = f"{c['key']}: {c['human']} [checkable: {c['checkable']}] {citation(e)}"
-                if not c.get("check"):
+                item = f"{c['key']}: {c['human']} [checkable: {checkable_text(c['checkable'])}] {citation(e)}"
+                if not c.get("check") or c["check"]["type"] in CODE_ONLY:
                     business.append(item)
                 elif c["check"]["type"] in SCH_ONLY:
                     json_only.append(item)

@@ -24,6 +24,9 @@ Layers, in order:
   XML   the track's XSD (lote_core.xsd), its Schematron (lote_core.sch), profile Schematron (generated/profiles/*.sch)
   JSON  the track's JSON Schema, or the profile's (generated/profiles/*.json allOf the explicit track), then the profile rules JSON
         Schema cannot express (x-rules-layer entries with a 'check', e.g. the 6-month NextUpdate rule)
+  both  the rules no schema language expresses, run by code (code_findings): every X509Certificate decodes as an X.509
+        certificate (R-X509Certificate, 6.6.3.1, every list), and the certificate checks of Annex H (H-sdi-key,
+        H-sdi-org; project_decisions_vs_etsi.md #6)
 Rule ids and citations:
   profile rules     the overlay element of the rule id (schemas/explicit/model/profiles/*.json): D-LoTEType-fixed
   core rules        the model constraint (R-...) or, for the other core Schematron patterns, the model source of their
@@ -37,6 +40,9 @@ Rule ids and citations:
                     A component the track requires or forbids (Table 1 / 6.3.0) uses the rule of its 'scheme' instead:
                     EXP-SchemeName-required, EXP-NextUpdate-prohibited (a forbidden component has max 0).
 Signatures are not validated here (JAdES / XAdES, see the annexes' x.4).
+Not checked: after the findings, the rules of the model without a 'check' (the explicit model's and the applied annex's),
+each with its checkable status and reason (the model's checkable_reasons), its citation, and where its field occurs in the
+list with the value.
 
 Exit code: 0 if valid, 1 if any failure, 2 on usage errors.
 """
@@ -578,7 +584,336 @@ def declared_lote_type(path, is_xml):
     return v.strip() if isinstance(v, str) and v.strip() else None
 
 
+# ------------------------------------------------------------------ not checked: the rules-layer requirements
+@dataclass
+class NotChecked:
+    """A rule of the model that no check here enforces in full (a constraint without 'check', or one that cannot be
+    decided from the list), with what checking it needs and where its field occurs in the list."""
+    rule: str
+    human: str
+    status: str                                           # checkable status: yes (not built here) / no
+    instrument: str = None                                # for the list's binding, a key of checkable_instruments:
+                                                          # what checks it (for a no rule: the part it checks)
+    instrument_text: str = ""
+    reason: str = None                                    # a key of the model's checkable_reasons
+    reason_text: str = ""
+    note: str = None
+    model_path: str = ""                                  # the model path(s) of the field(s) the rule is about
+    in_json: bool = True                                  # False: the field is not part of the JSON binding
+    occurrences: list = field(default_factory=list)       # [{"location", "value"}] in the list
+    source: dict = field(default_factory=dict)
+
+
+STATUS_ORDER = {"no": 0, "yes": 1}
+
+
+def model_target(C, path):
+    """(owner structure, component, sub-path) of a model path such as LoTE.TrustedEntitiesList.TrustedEntity.
+    TrustedEntityInformation.TEName; sub-path: the names inside a value (an extension, e.g. ServiceUniqueIdentifier)."""
+    segs = [s for s in path.split(".")[1:] if s not in ("uriValue", "value")]
+    struct, comp, items = C.root, None, None
+    for i, s in enumerate(segs):
+        if items is not None:                             # the item of a list component (TrustedEntity)
+            struct, items, comp = items.get("structure"), None, None
+            continue
+        comp = next(c for c in C.S[struct]["components"] if c["name"] == s)
+        if not comp.get("structure") and not (comp.get("items") or {}).get("structure"):
+            return struct, comp, segs[i + 1:]
+        if i < len(segs) - 1:
+            struct, items = (comp["structure"], None) if comp.get("structure") else (struct, comp["items"])
+    return struct, comp, []
+
+
+def short(v, n=100):
+    """A value of the list in one short line."""
+    if isinstance(v, list) and v and all(isinstance(x, dict) and "lang" in x for x in v):
+        v = "; ".join(f"{x['lang']}: {x.get('value') or x.get('uriValue') or '…'}" for x in v)
+    elif isinstance(v, (dict, list)):
+        v = f"present ({len(v)} item(s))" if isinstance(v, list) else "present"
+    s = " ".join(str(v).split())
+    return s if len(s) <= n else s[:n - 1] + "…"
+
+
+def is_hit(n, owner, comp):
+    """Whether model place n is the target: component comp of structure owner, or (comp None) a structure owner."""
+    if comp is None:
+        return n.kind == "struct" and n.struct == owner
+    return n.kind in ("leaf", "list", "struct", "wrapper") and n.owner == owner and n.comp and n.comp["name"] == comp["name"]
+
+
+def json_find(C, v, node, loc, owner, comp):
+    """(location, value, model place) of every place inside v (at model place node, location loc) that is component
+    comp of structure owner, or (comp None) a structure owner. A place found is not searched further."""
+    out = []
+
+    def walk(v, node, loc):
+        items = v.items() if isinstance(v, dict) else enumerate(v) if isinstance(v, list) else ()
+        for k, x in items:
+            n = C.json_child(node, k)
+            if n is None:
+                continue
+            here = f"{loc}/{k}"
+            if is_hit(n, owner, comp):
+                out.append((here, x, n))
+            elif n.kind != "leaf":
+                walk(x, n, here)
+    walk(v, node, loc)
+    return out
+
+
+def json_occurrences(C, doc, owner, comp, sub):
+    return [o for loc, x, _ in json_find(C, doc, Node("doc", name="(document)"), "", owner, comp)
+            for o in json_sub(x, loc, sub)]
+
+
+def json_sub(v, loc, sub):
+    """The occurrences of sub-path sub (names inside a value, e.g. an extension) in v, or v itself."""
+    if not sub:
+        return [{"location": loc, "value": short(v)}]
+    out = []
+    items = v.items() if isinstance(v, dict) else enumerate(v) if isinstance(v, list) else ()
+    for k, x in items:
+        out.extend(json_sub(x, f"{loc}/{k}", sub[1:]) if k == sub[0] else
+                   json_sub(x, f"{loc}/{k}", sub) if isinstance(x, (dict, list)) else [])
+    return out
+
+
+def xml_value(el):
+    kids = [k for k in el if isinstance(k.tag, str)]
+    lang = "{http://www.w3.org/XML/1998/namespace}lang"
+    if kids and all(k.get(lang) for k in kids):
+        return short("; ".join(f"{k.get(lang)}: {' '.join(k.itertext()).strip()}" for k in kids))
+    if len(kids) == 1 and not len(kids[0]):               # a value in a helper element (NextUpdate/dateTime)
+        return short(kids[0].text or "")
+    return short(el.text or "") if not kids else "present"
+
+
+def xml_step(el):
+    ns = re.match(r"\{([^}]*)\}", el.tag)
+    name = f"{PREFIX.get(ns.group(1), 'lote') if ns else ''}{':' if ns else ''}{local(el.tag)}"
+    same = [s for s in el.getparent() if s.tag == el.tag] if el.getparent() is not None else [el]
+    return name + (f"[{same.index(el) + 1}]" if len(same) > 1 else "")
+
+
+def xml_path(el):
+    return "/" + "/".join(xml_step(a) for a in reversed([el] + list(el.iterancestors())))
+
+
+def xml_find(C, el, node, owner, comp):
+    """(element, model place) of every element inside el (at model place node) that is component comp of structure
+    owner, or (comp None) a structure owner. An element found is not searched further."""
+    out = []
+
+    def walk(el, node):
+        for ch in el:
+            if not isinstance(ch.tag, str):
+                continue
+            n = C.xml_child(node, local(ch.tag))
+            if n is None:
+                continue
+            if is_hit(n, owner, comp):
+                out.append((ch, n))
+            elif n.kind != "leaf":
+                walk(ch, n)
+    walk(el, node)
+    return out
+
+
+def xml_root_node(C, root):
+    return Node("struct", C.root, None, None, local(root.tag))
+
+
+def xml_occurrences(C, root, owner, comp, sub):
+    if comp is not None and is_attribute(comp):
+        name = comp["xml"]["form"].split()[-1] if " " in comp["xml"]["form"] else comp["name"]
+        return [{"location": xml_path(root) + f"/@{name}", "value": short(root.get(name))}] \
+            if owner == C.root and root.get(name) is not None else []
+    out = []
+    for ch, _ in xml_find(C, root, xml_root_node(C, root), owner, comp):
+        hits = [ch] if not sub else [d for d in ch.iter() if isinstance(d.tag, str) and local(d.tag) == sub[-1]]
+        out.extend({"location": xml_path(h), "value": xml_value(h)} for h in hits)
+    return out
+
+
+def read_list(path, is_xml):
+    """The list as parsed JSON or as the XML root element; None if it cannot be read (the findings say why)."""
+    try:
+        if is_xml:
+            from lxml import etree
+            return etree.parse(path, etree.XMLParser(resolve_entities=False, no_network=True)).getroot()
+        return json.load(open(path, encoding="utf-8"))
+    except Exception:
+        return None
+
+
+# ------------------------------------------------------------------ code checks: what no schema language expresses
+CODE_CHECKS = ("x509-certificate", "cert-same-key-subject", "cert-org-matches")   # the generator's CODE_ONLY check types
+
+
+def decode_cert(b64):
+    """An X509Certificate value of the list as a certificate, or the reason it is not one."""
+    import base64, binascii
+    from cryptography import x509
+    try:
+        return x509.load_der_x509_certificate(base64.b64decode("".join(b64.split()), validate=True)), None
+    except (binascii.Error, ValueError) as err:
+        return None, str(err) or type(err).__name__
+
+
+def certificates(C, sdi, node, loc, is_xml):
+    """(location, base64 value) of each X509Certificate in a ServiceDigitalIdentity (JSON: strings or {"val": ...})."""
+    comp = next(c for c in C.S["ServiceDigitalIdentity"]["components"] if c["name"] == "X509Certificate")
+    if is_xml:
+        return [(xml_path(el), (el.text or "").strip()) for el, _ in xml_find(C, sdi, node, "ServiceDigitalIdentity", comp)]
+    out = []
+    for lloc, v, _ in json_find(C, sdi, node, loc, "ServiceDigitalIdentity", comp):
+        for i, x in enumerate(v if isinstance(v, list) else [v]):
+            val = x.get("val") if isinstance(x, dict) else x
+            if isinstance(val, str):
+                out.append((f"{lloc}/{i}" if isinstance(v, list) else lloc, val))
+    return out
+
+
+def multilang_values(v, is_xml):
+    """The texts of a multilingual component (TEName): every language."""
+    if is_xml:
+        return [" ".join(k.itertext()) for k in v if isinstance(k.tag, str)]
+    return [x["value"] for x in v if isinstance(x, dict) and isinstance(x.get("value"), str)] if isinstance(v, list) else []
+
+
+def code_findings(C, annex, path, is_xml):
+    """Findings of the rules whose check is run here (the generator's CODE_ONLY types): for every list, the core rule
+    R-X509Certificate (6.6.3.1: each X509Certificate decodes as a DER X.509 certificate); for Annex H, also the
+    certificate checks H-sdi-key and H-sdi-org (project_decisions_vs_etsi.md #6). A value that is not a certificate is
+    reported once, by R-X509Certificate; the H rules skip it."""
+    core = [(sname, c) for sname, st in C.S.items() for c in st.get("constraint", [])
+            if (c.get("check") or {}).get("type") in CODE_CHECKS]
+    rules = []
+    for fn in glob.glob(os.path.join(OVERLAYS, f"{annex}_*.json")) if annex else ():
+        for e in json.load(open(fn, encoding="utf-8"))["differential"]["element"]:
+            rules += [(e, c) for c in e.get("constraint", []) if (c.get("check") or {}).get("type") in CODE_CHECKS]
+    doc = read_list(path, is_xml) if core or rules else None
+    if doc is None:
+        return []
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.x509.oid import NameOID
+    start = xml_root_node(C, doc) if is_xml else Node("doc", name="(document)")
+    find = (lambda v, n, loc, o, c: [(xml_path(el), el, nn) for el, nn in xml_find(C, v, n, o, c)]) if is_xml else \
+        (lambda v, n, loc, o, c: json_find(C, v, n, loc, o, c))
+    out = []
+
+    def certs(sdi, node, loc):
+        """The certificates of a ServiceDigitalIdentity that decode; R-X509Certificate reports the others."""
+        return [(cloc, cert) for cloc, b64 in certificates(C, sdi, node, loc, is_xml)
+                for cert in [decode_cert(b64)[0]] if cert is not None]
+    for sname, c in core:                                                  # x509-certificate, on ServiceDigitalIdentity
+        for loc, sdi, node in find(doc, start, "", sname, None):          # every one, wherever it is in the list
+            for cloc, b64 in certificates(C, sdi, node, loc, is_xml):
+                cert, err = decode_cert(b64)
+                if cert is None:
+                    out.append(Finding("rules", c["key"], cloc, f"Not an X.509 certificate (DER, base64): {err}.",
+                                       C.core_rule(c["key"])))
+    for e, c in rules:
+        ck, src = c["check"], C.profile(c["key"])
+        owner, comp, _ = model_target(C, e["path"])                       # ServiceInformation.ServiceDigitalIdentity
+        if ck["type"] == "cert-same-key-subject":
+            for loc, sdi, node in find(doc, start, "", owner, comp):
+                cs = certs(sdi, node, loc)
+                keys = {cert.public_key().public_bytes(serialization.Encoding.DER,
+                                                       serialization.PublicFormat.SubjectPublicKeyInfo) for _, cert in cs}
+                subjects = {cert.subject.rfc4514_string() for _, cert in cs}
+                if len(keys) > 1:
+                    out.append(Finding("rules", c["key"], loc, f"The {len(cs)} certificates relate to {len(keys)} "
+                                                                "different public keys; they must all relate to the same one.", src))
+                if len(subjects) > 1:
+                    out.append(Finding("rules", c["key"], loc, "The certificates have different subject names: "
+                                       + "; ".join(sorted(subjects)) + ".", src))
+        elif ck["type"] == "cert-org-matches":
+            s_owner, s_comp, _ = model_target(C, ck["scope"])               # TrustedEntity
+            a_owner, a_comp, _ = model_target(C, ck["scope"] + "." + ck["against"])   # TrustedEntityInformation.TEName
+            for tloc, te, tnode in find(doc, start, "", s_owner, s_comp):
+                names = [x for _, v, _ in find(te, tnode, tloc, a_owner, a_comp) for x in multilang_values(v, is_xml)]
+                for loc, sdi, node in find(te, tnode, tloc, owner, comp):
+                    for cloc, cert in certs(sdi, node, loc):
+                        orgs = [a.value for a in cert.subject.get_attributes_for_oid(NameOID.ORGANIZATION_NAME)]
+                        if not orgs:
+                            out.append(Finding("rules", c["key"], cloc, f"The certificate's subject "
+                                               f"({cert.subject.rfc4514_string()}) has no organizationName.", src))
+                        for o in orgs:
+                            if o not in names:
+                                out.append(Finding("rules", c["key"], cloc, f"The organizationName '{o}' is not one of "
+                                                   f"the TEName values {names}.", src))
+    return out
+
+
+def not_checked(C, annex, path, is_xml):
+    """The rules of the explicit model and of the applied annex that no check enforces in full: the rules-layer
+    requirements (no 'check') and the 'no' rules a check covers only in part, each with where its field occurs in the
+    list."""
+    checked = lambda c: c.get("check") and c["checkable"]["status"] == "yes"
+    rules = []                                            # (rule, checkable, [(owner, comp, sub, field)], source)
+    for sname, st in C.S.items():
+        for c in st.get("constraint", []):
+            if checked(c):
+                continue
+            comps = [next(x for x in st["components"] if x["name"] == n) for n in c.get("components", [])]
+            targets = [(sname, x, [], f"{sname}.{x['name']}") for x in comps] or [(sname, None, [], sname)]
+            rules.append((c, targets, C.core_rule(c["key"])))
+    if annex:
+        for fn in glob.glob(os.path.join(OVERLAYS, f"{annex}_*.json")):
+            for e in json.load(open(fn, encoding="utf-8"))["differential"]["element"]:
+                for c in e.get("constraint", []):
+                    if not checked(c):
+                        owner, comp, sub = model_target(C, e["path"])
+                        rules.append((c, [(owner, comp, sub, e["path"])], C.profile(c["key"])))
+    doc = read_list(path, is_xml)                         # None: unreadable, the findings say why; no occurrences
+    reasons, instruments = C.model.get("checkable_reasons", {}), C.model.get("checkable_instruments", {})
+    out = []
+    for c, targets, src in rules:
+        ck = c["checkable"]
+        inst = (ck["instrument"] or {}).get("xml" if is_xml else "json")
+        nc = NotChecked(c["key"], c["human"], ck["status"], inst, instruments.get(inst, ""),
+                        ck["reason"], reasons.get(ck["reason"], ""), ck["note"], ", ".join(t[3] for t in targets),
+                        source=src)
+        for owner, comp, sub, _ in targets:
+            if not is_xml and comp is not None and (comp.get("json") or {}).get("max") == "0":
+                nc.in_json = False
+            elif doc is not None:
+                nc.occurrences += (xml_occurrences if is_xml else json_occurrences)(C, doc, owner, comp, sub)
+        out.append(nc)
+    return sorted(out, key=lambda n: STATUS_ORDER[n.status])
+
+
 # ------------------------------------------------------------------ report
+NOT_CHECKED_HEADING = {"no": "cannot be decided from the list alone", "yes": "checkable, but not built here"}
+
+
+def not_checked_report(items, shown=3):
+    lines = [f"\nNot checked ({len(items)} rule(s) of the model no check here enforces):"]
+    status = None
+    for n in items:
+        if n.status != status:
+            status = n.status
+            lines.append(f"\n  -- {status}: {NOT_CHECKED_HEADING[status]}")
+        why = f"{n.reason}: {n.reason_text}" if n.reason else f"by {n.instrument}: {n.instrument_text}"
+        lines.append(f"\n  {n.rule}  [{why}]" + (f" ({n.note})" if n.note else ""))
+        if n.reason and n.instrument:
+            lines.append(f"    part  {n.instrument_text} checks what the list itself shows (a failure is in the findings above)")
+        lines.append(f"    rule  {n.human}")
+        s = n.source
+        if s.get("quote"):
+            lines.append(f"    spec  {s['ref']}, p. {s['page']}, line {s['line']}: \"{s['quote']}\"")
+        if not n.in_json:
+            lines.append(f"    in the list  {n.model_path}: not part of the JSON binding")
+        elif not n.occurrences:
+            lines.append(f"    in the list  {n.model_path}: not present")
+        for i, o in enumerate(n.occurrences[:shown]):
+            lines.append(f"    {'in the list' if i == 0 else '           '}  {o['location']}  {o['value']}")
+        if len(n.occurrences) > shown:
+            lines.append(f"                 … and {len(n.occurrences) - shown} more")
+    return lines
+
+
 def text_report(r):
     lines = [f"{r.path}: {r.track} track ({r.track_reason}), "
              + (f"profile {r.profile} ({r.profile_reason})" if r.profile else f"no profile ({r.profile_reason})")
@@ -602,7 +937,7 @@ def text_report(r):
             lines.append(f"  spec {s['ref']}, p. {s['page']}, line {s['line']}: \"{s['quote']}\"")
         elif s.get("ref"):
             lines.append(f"  spec {s['ref']}")
-    lines.append("\nNot checked here: the signature (JAdES / XAdES), and rules-layer items no program can check.")
+    lines += not_checked_report(r.not_checked)
     return "\n".join(lines)
 
 
@@ -618,6 +953,7 @@ class Report:
     profile_reason: str = ""                              # why: --profile, the list's LoTEType, or why none
     declared_profile: str = None                          # what the list's LoTEType names: annex letter, "LoTL", or None
     warnings: list = field(default_factory=list)          # [str], e.g. --profile differs from the declared annex
+    not_checked: list = field(default_factory=list)       # [NotChecked]: the rules-layer requirements, with their fields
 
     @property
     def valid(self):
@@ -627,7 +963,8 @@ class Report:
         return {"track": self.track, "track_reason": self.track_reason, "profile": self.profile,
                 "profile_reason": self.profile_reason, "declared_profile": self.declared_profile,
                 "warnings": self.warnings, "root_corrected": self.root_corrected,
-                "findings": [asdict(f) for f in self.findings]}
+                "findings": [asdict(f) for f in self.findings],
+                "not_checked": [asdict(n) for n in self.not_checked]}
 
 
 def validate(path, profile=None, track=None):
@@ -671,7 +1008,9 @@ def validate(path, profile=None, track=None):
     C = Citations(tr)
     gen = TRACKS[tr]["gen"]
     findings, corrected = validate_xml(path, annex, C, gen) if is_xml else (validate_json(path, annex, C, gen), False)
-    return Report(path, tr, why, profile, findings, corrected, profile_why, declared, warnings)
+    findings += code_findings(C, annex, path, is_xml)
+    return Report(path, tr, why, profile, findings, corrected, profile_why, declared, warnings,
+                  not_checked(C, annex, path, is_xml))
 
 
 def main(argv=None):

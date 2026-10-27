@@ -18,7 +18,7 @@ The model says WHAT the text requires; this script holds HOW the XML binding exp
 import json, os
 from xml.sax.saxutils import escape
 
-from .model import allowed
+from .model import CODE_ONLY, allowed
 from .paths import BASE_GEN, MODEL, ROOT, SNAPSHOT, TRACK_GEN
 
 OUT = BASE_GEN
@@ -218,7 +218,8 @@ class Gen:
     def core(self):
         root = self.m["root"]
         rx = self.m["structures"][root].get("xml") or {}
-        business = "\n".join(f"  - {c['clause']} {c['human']}" for _, c in self.constraints() if not c.get("check"))
+        business = "\n".join(f"  - {c['clause']} {c['human']}" + (" (checked by the validator's code)" if c.get("check") else "")
+                             for _, c in self.constraints() if not c.get("check") or c["check"]["type"] in CODE_ONLY)
         ext_imports = "".join(f'  <xsd:import namespace="{e["xml"]["namespace"]}" schemaLocation="{f}"/>\n'
                               for f, e in (("lote_tie.xsd", self.m["extensions"]["OtherAssociatedBodies"]),
                                            ("lote_sie.xsd", self.m["extensions"]["ServiceUniqueIdentifier"])))

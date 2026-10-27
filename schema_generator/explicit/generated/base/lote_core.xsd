@@ -12,6 +12,7 @@
   - 6.4.4 ServiceHistory instances are in descending order of status change date-time.
   - 6.6.5 StatusStartingTime of a new current status is not before the list's (re)issuance.
   - 6.6.3.0 A PKI-based service identity contains an X509Certificate or an X509SKI (6.6.0 says: at least one X509Certificate).
+  - 6.6.3.1 Every X509Certificate is an X.509 certificate: its base64 value decodes to a DER-encoded certificate. (checked by the validator's code)
 -->
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:lote="http://uri.etsi.org/019602/v1#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
             targetNamespace="http://uri.etsi.org/019602/v1#" elementFormDefault="qualified" attributeFormDefault="unqualified">

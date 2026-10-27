@@ -72,6 +72,28 @@ XSD validation starts at the root, and the profile Schematron rules name their e
 | Track rules | `schemas/<track>/lote_core.sch` | (in the JSON Schema) |
 | Profile | `schemas/explicit/profiles/*.sch` | `schemas/explicit/profiles/*.json` |
 | Rules JSON Schema cannot express | (in the Schematron) | the profile's `x-rules-layer` checks, e.g. the 6-month `NextUpdate` rule |
+| Rules no schema language can express | the validator's code | the validator's code |
+
+The last layer decodes the X.509 certificates with the `cryptography` library. In every list (D-I and LoTL), each `X509Certificate` must decode as a DER X.509 certificate: `R-X509Certificate` (6.6.3.1, "a Base64 encoded X.509 certificate"; the schemas check only that the value is base64), in every `ServiceDigitalIdentity`, the services' and the pointers' to other lists. In an Annex H list, also `H-sdi-key` (several certificates in one `ServiceDigitalIdentity` have the same public key and identical subject names) and `H-sdi-org` (each certificate's organizationName is identical to at least one `TEName` value of its trusted entity, [project decisions #6](../docs/project_decisions_vs_etsi.md#6-a-certificates-organizationname-matches-at-least-one-tename-value)). A value that is not a certificate is reported once, by `R-X509Certificate`; the H rules skip it. The rules are read from the explicit model (`check` type `x509-certificate`) and the overlay (`cert-same-key-subject`, `cert-org-matches`); their findings have the layer `rules`.
+
+## Not checked
+
+After the findings, every report lists the rules of the model that no check here enforces in full: the constraints without a `check` in the explicit model (`R-...`) and in the applied annex's overlay (`D-te-name`, ...), and the `no` rules a Schematron / JSON Schema check covers only in part (`D-ptr-self`: the schema checks that a pointer names this list's LoTEType; that its location is this list needs the publication URL). They come from the model, not from the list, so the same rules are listed whether the list is valid or not. Each one shows:
+
+- its `checkable` status, grouped: `no` (cannot be decided from the list alone), `yes` (checkable, but not built here: the signature, two date comparisons);
+- for `no`, the reason, a key of the model's `checkable_reasons` with its text, e.g. `official-records: needs official records (business or company registers) to confirm a name or registration`, and, when a schema check covers part of the rule, a `part` line;
+- for `yes`, the instrument that would check it in the list's binding, a key of `checkable_instruments` (`signature-verifier`; for the date comparisons `schematron` in XML, `code` in JSON);
+- the rule and its citation;
+- where its field is in the list, with the value (the first three occurrences; `--json` has all), or that the field is not present, or not part of the JSON binding (`Signature`).
+
+```
+  D-te-name  [official-records: needs official records (business or company registers) to confirm a name or registration]
+    rule  TEName is the (legal) name of the listed provider.
+    spec  Table D.2 TE name, p. 47, line 2907: "The value of the TEName component shall be the name of the"
+    in the list  /LoTE/TrustedEntitiesList/0/TrustedEntityInformation/TEName  en: Provider BE
+```
+
+The field of a profile rule is its overlay element's `path`; a core rule names its fields in `components` (or, without one, is about every instance of its structure: `R-PKIIdentity`). `--json` has the same as `not_checked`.
 
 ## Schemas
 
@@ -104,6 +126,7 @@ The full list, with reasons and fixes, is in [known_gaps.md](known_gaps.md).
 
 - **Only the explicit track.** Implicit lists are not supported: every list is validated as explicit, so an implicit list fails with the Table 1 rules. The base model (both kinds of list) is not used.
 - **Unrecognized critical extensions are not rejected** (clause 6.3.17).
+- **Certificates are decoded for Annex H only**, and only those of the current service information: the certificate content rules of the other annexes (`D-sdi-content`, …) and the 6.6.3.0 recommendation for every list are not checked.
 - **There is no signature validator.** Whether a signature is valid (the envelope, the JAdES / XAdES header, the signing certificate, the cryptographic signature) is not checked. The schemas check only where a signature may or must sit: no `Signature` component in a JSON list (6.8.0), `ds:Signature` optional in XML, required in an Annex H list in XML (H.4).
 - **Network on first XML run:** the XSD imports `xml.xsd` and the W3C XML-DSig schema from w3.org.
-- Rules-layer requirements no program can check (listed in each profile) are not checked.
+- Rules-layer requirements no program can check are not checked; each report lists them, with the fields they are about (see [Not checked](#not-checked)).

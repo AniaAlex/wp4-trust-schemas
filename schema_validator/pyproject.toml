@@ -22,6 +22,7 @@ dependencies = [
     "lxml>=5",
     "rfc3339-validator",          # format checks of the JSON Schema (date-time)
     "rfc3986-validator",          # format checks of the JSON Schema (uri)
+    "cryptography>=42",           # decoding the X.509 certificates in a list (H-sdi-key, H-sdi-org)
 ]
 
 [project.optional-dependencies]

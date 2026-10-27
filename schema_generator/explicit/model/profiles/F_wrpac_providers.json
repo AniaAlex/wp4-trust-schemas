@@ -33,7 +33,12 @@
             "severity": "error",
             "human": "The first instance of the list is issued with LoTESequenceNumber 1.",
             "expression": null,
-            "checkable": "partly: needs the list history"
+            "checkable": {
+              "status": "no",
+              "instrument": null,
+              "reason": "list-history",
+              "note": null
+            }
           }
         ],
         "citation": {
@@ -96,7 +101,15 @@
             "severity": "error",
             "human": "NextUpdate is at most 6 months after ListIssueDateTime.",
             "expression": "NextUpdate.empty() or NextUpdate <= ListIssueDateTime + 6 months",
-            "checkable": "yes: date arithmetic (Schematron; not expressible in JSON Schema)",
+            "checkable": {
+              "status": "yes",
+              "instrument": {
+                "xml": "schematron",
+                "json": "code"
+              },
+              "reason": null,
+              "note": null
+            },
             "check": {
               "type": "months-after",
               "component": "NextUpdate",
@@ -121,7 +134,12 @@
             "severity": "error",
             "human": "One URI for information about the list and one where all previous instances can be retrieved; one URI may serve both, so the count is not enforced.",
             "expression": null,
-            "checkable": "no: content of the pages"
+            "checkable": {
+              "status": "no",
+              "instrument": null,
+              "reason": "page-content",
+              "note": null
+            }
           }
         ],
         "citation": {
@@ -152,7 +170,15 @@
             "severity": "error",
             "human": "One pointer designates this list itself (identified here by its LoTEType qualifier).",
             "expression": "OtherLoTEPointer.LoTEQualifiers.LoTEQualifier.where(LoTEType = 'http://uri.etsi.org/19602/LoTEType/EUWRPACProvidersList').exists()",
-            "checkable": "partly: that the location is this list itself needs the publication URL",
+            "checkable": {
+              "status": "no",
+              "instrument": {
+                "xml": "schematron",
+                "json": "json-schema"
+              },
+              "reason": "publication-url",
+              "note": "that the location is this list itself needs the publication URL"
+            },
             "check": {
               "type": "contains",
               "component": ".",
@@ -182,7 +208,12 @@
             "severity": "error",
             "human": "TEName is the (legal) name of the listed provider.",
             "expression": null,
-            "checkable": "no: needs official records"
+            "checkable": {
+              "status": "no",
+              "instrument": null,
+              "reason": "official-records",
+              "note": null
+            }
           }
         ],
         "citation": {
@@ -201,7 +232,12 @@
             "severity": "error",
             "human": "The official registration identifier where one exists (organizationIdentifier / serialNumber semantics of ETSI EN 319 412-1).",
             "expression": null,
-            "checkable": "no: needs official records"
+            "checkable": {
+              "status": "no",
+              "instrument": null,
+              "reason": "official-records",
+              "note": null
+            }
           }
         ],
         "citation": {
@@ -220,7 +256,15 @@
             "severity": "error",
             "human": "The electronic address contains a contact phone number (tel: URI).",
             "expression": "TEElectronicAddress.where(uriValue.startsWith('tel:')).exists()",
-            "checkable": "yes",
+            "checkable": {
+              "status": "yes",
+              "instrument": {
+                "xml": "schematron",
+                "json": "json-schema"
+              },
+              "reason": null,
+              "note": null
+            },
             "check": {
               "type": "contains",
               "component": "TEElectronicAddress",
@@ -249,7 +293,15 @@
             "severity": "error",
             "human": "At least the policy page (a) and the Member State URI (c).",
             "expression": "TEInformationURI.count() >= 2",
-            "checkable": "yes",
+            "checkable": {
+              "status": "yes",
+              "instrument": {
+                "xml": "schematron",
+                "json": "json-schema"
+              },
+              "reason": null,
+              "note": null
+            },
             "check": {
               "type": "min-items",
               "component": "TEInformationURI",
@@ -261,7 +313,15 @@
             "severity": "error",
             "human": "(a) An http(s) page with the provider's policies, terms and conditions.",
             "expression": "TEInformationURI.where(uriValue.matches('^https?://') and uriValue.startsWith('http://uri.etsi.org/19602/ListOfTrustedEntities/').not()).exists()",
-            "checkable": "partly: that the page holds the policies is not checkable",
+            "checkable": {
+              "status": "no",
+              "instrument": {
+                "xml": "schematron",
+                "json": "json-schema"
+              },
+              "reason": "page-content",
+              "note": "that the page holds the policies is not checkable"
+            },
             "check": {
               "type": "contains",
               "component": "TEInformationURI",
@@ -294,7 +354,15 @@
             "severity": "error",
             "human": "(c) http://uri.etsi.org/19602/ListOfTrustedEntities/WRPACProvider/CC for the responsible Member State ('CC' field: Greece = EL, clause 6.1.5).",
             "expression": "TEInformationURI.where(uriValue.matches('^http://uri\\\\.etsi\\\\.org/19602/ListOfTrustedEntities/WRPACProvider/(AT|BE|BG|CY|CZ|DE|DK|EE|EL|ES|FI|FR|HR|HU|IE|IT|LT|LU|LV|MT|NL|PL|PT|RO|SE|SI|SK)$')).exists()",
-            "checkable": "yes",
+            "checkable": {
+              "status": "yes",
+              "instrument": {
+                "xml": "schematron",
+                "json": "json-schema"
+              },
+              "reason": null,
+              "note": null
+            },
             "check": {
               "type": "contains",
               "component": "TEInformationURI",
@@ -379,7 +447,12 @@
             "severity": "error",
             "human": "Where applicable, the certificates carry the information that distinguishes access certificates from other certificates.",
             "expression": null,
-            "checkable": "partly: needs certificate parsing"
+            "checkable": {
+              "status": "no",
+              "instrument": null,
+              "reason": "certificate-parsing",
+              "note": null
+            }
           }
         ],
         "citation": {
@@ -409,7 +482,12 @@
             "severity": "error",
             "human": "An entity or service that loses its approval is removed from the list.",
             "expression": null,
-            "checkable": "no: operational process"
+            "checkable": {
+              "status": "no",
+              "instrument": null,
+              "reason": "operational-process",
+              "note": null
+            }
           }
         ],
         "citation": {
@@ -467,7 +545,15 @@
               "human": "ds:SignedInfo has a ds:Reference with URI=\"\" (the entire document)",
               "expression": null,
               "xpath": "ds:SignedInfo/ds:Reference[@URI='']",
-              "checkable": "yes",
+              "checkable": {
+                "status": "yes",
+                "instrument": {
+                  "xml": "schematron",
+                  "json": "not-applicable"
+                },
+                "reason": null,
+                "note": "JSON: not applicable. A JSON list is signed by encapsulation (compact JAdES: the list is the payload of the JWS, 6.8.0), so it has no ds:Signature element and the signature covers the whole list by construction; its signature rules are the signature verifier's (x-sig)."
+              },
               "row": "H.4 Signature",
               "from": "wp4",
               "reason": "Annex F allows JSON only and defines no XML signature. WP4 applies H.4 2)-3), the only XML signature profile of TS 119 602, to XML lists of this annex when they carry ds:Signature: a reference by Id is open to signature wrapping (project_decisions_vs_etsi.md #2).",
@@ -483,7 +569,15 @@
               "human": "The ds:Reference with URI=\"\" has one ds:Transforms with two ds:Transform: enveloped-signature, then exclusive canonicalization",
               "expression": null,
               "xpath": "not(ds:SignedInfo/ds:Reference[@URI='']) or ds:SignedInfo/ds:Reference[@URI=''][count(ds:Transforms)=1][count(ds:Transforms/ds:Transform)=2][ds:Transforms/ds:Transform[1]/@Algorithm='http://www.w3.org/2000/09/xmldsig#enveloped-signature'][ds:Transforms/ds:Transform[2]/@Algorithm='http://www.w3.org/2001/10/xml-exc-c14n#']",
-              "checkable": "yes",
+              "checkable": {
+                "status": "yes",
+                "instrument": {
+                  "xml": "schematron",
+                  "json": "not-applicable"
+                },
+                "reason": null,
+                "note": "JSON: not applicable. A JSON list is signed by encapsulation (compact JAdES: the list is the payload of the JWS, 6.8.0), so it has no ds:Signature element and the signature covers the whole list by construction; its signature rules are the signature verifier's (x-sig)."
+              },
               "row": "H.4 Signature",
               "from": "wp4",
               "reason": "Annex F allows JSON only and defines no XML signature. WP4 applies H.4 2)-3), the only XML signature profile of TS 119 602, to XML lists of this annex when they carry ds:Signature: a reference by Id is open to signature wrapping (project_decisions_vs_etsi.md #2).",
@@ -499,7 +593,15 @@
               "human": "ds:SignedInfo is canonicalized with exclusive canonicalization",
               "expression": null,
               "xpath": "ds:SignedInfo/ds:CanonicalizationMethod/@Algorithm='http://www.w3.org/2001/10/xml-exc-c14n#'",
-              "checkable": "yes",
+              "checkable": {
+                "status": "yes",
+                "instrument": {
+                  "xml": "schematron",
+                  "json": "not-applicable"
+                },
+                "reason": null,
+                "note": "JSON: not applicable. A JSON list is signed by encapsulation (compact JAdES: the list is the payload of the JWS, 6.8.0), so it has no ds:Signature element and the signature covers the whole list by construction; its signature rules are the signature verifier's (x-sig)."
+              },
               "row": "H.4 Signature",
               "from": "wp4",
               "reason": "Annex F allows JSON only and defines no XML signature. WP4 applies H.4 2)-3), the only XML signature profile of TS 119 602, to XML lists of this annex when they carry ds:Signature: a reference by Id is open to signature wrapping (project_decisions_vs_etsi.md #2).",
@@ -519,7 +621,15 @@
             "severity": "error",
             "human": "Signed with a compact JAdES Baseline B signature (ETSI TS 119 182-1).",
             "expression": null,
-            "checkable": "yes: with a JAdES / XAdES verifier"
+            "checkable": {
+              "status": "yes",
+              "instrument": {
+                "xml": "signature-verifier",
+                "json": "signature-verifier"
+              },
+              "reason": null,
+              "note": null
+            }
           }
         ],
         "citation": {
