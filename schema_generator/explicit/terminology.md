@@ -217,7 +217,7 @@ Each entry of `constraint`:
 | `human` | the rule in words, used in messages | FHIR `constraint.human` |
 | `expression` | the rule in FHIRPath; `null` when no schema can check it | FHIR `constraint.expression` |
 | `checkable` | `{status, instrument, reason, note}`, `null` where not applicable: `status` yes when code can decide the rule from the list alone; `instrument` per binding `{xml, json}` from `checkable_instruments` (what checks it; `not-applicable` where the rule does not exist in the binding); `reason` from `checkable_reasons` (why not) | project |
-| `check` | the rule in a structured form the generator translates to JSON Schema and XPath: `contains`, `min-items`, `months-after` | project |
+| `check` | the rule in a structured form the generator translates to JSON Schema and XPath (`contains`, `min-items`, `months-after`, `has-entry`, `required-if`), or that the validator's code runs (`x509-certificate`, `cert-same-key-subject`, `cert-org-matches`) | project |
 | `xpath` | the rule as an XPath 1.0 test from the constrained element; only in an `xml.constraint` (XML only) | FHIR R4 `constraint.xpath` |
 | `row`, `citation` | the constraint's own annex row and sentence, when it is not the element's (e.g. `D-sig-ref-uri` cites H.4) | project |
 | `from`, `reason` | `text`, or `wp4` with the reason: a WP4 rule, not the annex's (its message starts with "WP4 rule") | project |

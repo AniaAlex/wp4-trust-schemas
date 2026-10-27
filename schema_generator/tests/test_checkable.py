@@ -9,6 +9,7 @@ import json
 
 import pytest
 
+from lote_schema_generator.gen_profiles_from_model import CODE_ONLY, SCH_ONLY
 from lote_schema_generator.paths import PROFILES_DIR, SNAPSHOT
 
 MODEL = json.load(open(SNAPSHOT["explicit"], encoding="utf-8"))
@@ -52,7 +53,9 @@ def test_checkable_shape(where, c):
     if c.get("xpath"):                                    # an XML-only rule (ds:Signature): no JSON counterpart
         assert ck["instrument"] == {"xml": "schematron", "json": "not-applicable"} and ck["note"]
     elif t:                                               # what the generators make of the check
-        assert ck["instrument"] == {"xml": "schematron", "json": "code" if t == "months-after" else "json-schema"}
+        want = {"xml": "code", "json": "code"} if t in CODE_ONLY else \
+            {"xml": "schematron", "json": "code" if t in SCH_ONLY else "json-schema"}
+        assert ck["instrument"] == want
     assert ck["note"] is None or (isinstance(ck["note"], str) and ck["note"])
 
 

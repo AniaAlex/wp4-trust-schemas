@@ -20,7 +20,7 @@ JSON binding conventions:
 """
 import argparse, json, os
 
-from .model import allowed
+from .model import CODE_ONLY, allowed
 from .paths import BASE_GEN, MODEL, ROOT, SNAPSHOT, TRACK_GEN
 
 OUT = BASE_GEN + "lote_core.schema.json"
@@ -257,7 +257,8 @@ class Gen:
             defs[n] = {"description": cite(e["source"]).strip(), **self.extension_schema(e)}
         self.apply_constraints(defs)
         defs.update(self.defs)
-        business = [f"{c['clause']} {c['human']}" for _, c in constraints(self.m) if not c.get("check")]
+        business = [f"{c['clause']} {c['human']}" + (" (checked by the validator's code)" if c.get("check") else "")
+                    for _, c in constraints(self.m) if not c.get("check") or c["check"]["type"] in CODE_ONLY]
         root = self.m["root"]
         return {
             "$schema": "https://json-schema.org/draft/2020-12/schema",

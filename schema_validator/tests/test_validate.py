@@ -1,6 +1,7 @@
 """lote-validate on sample lists (tests/data, written from the generator's test builders): the verdict, the track, the
 rules that fail, and the citation each failure carries."""
 import filecmp
+import re
 import json
 from pathlib import Path
 
@@ -367,3 +368,103 @@ def test_not_checked_in_the_reports(capsys):
     main([str(DATA / "D_pid_providers.json"), "--json"])
     rules = {n["rule"] for n in json.loads(capsys.readouterr().out)["not_checked"]}
     assert "D-te-name" in rules
+
+
+# ------------------------------------------------------------------ certificate checks (Annex H, decisions #6)
+def _cert(org="Provider BE", key=None, cn="Service"):
+    """A self-signed test certificate, base64 DER: organizationName org (None: none), the given or a new EC key."""
+    import base64
+    import datetime
+    from cryptography import x509
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from cryptography.x509.oid import NameOID
+    key = key or ec.generate_private_key(ec.SECP256R1())
+    attrs = [x509.NameAttribute(NameOID.COUNTRY_NAME, "BE")]
+    attrs += [x509.NameAttribute(NameOID.ORGANIZATION_NAME, org)] if org else []
+    name = x509.Name(attrs + [x509.NameAttribute(NameOID.COMMON_NAME, cn)])
+    day = datetime.datetime(2025, 1, 1, tzinfo=datetime.timezone.utc)
+    cert = (x509.CertificateBuilder().subject_name(name).issuer_name(name).public_key(key.public_key())
+            .serial_number(x509.random_serial_number()).not_valid_before(day)
+            .not_valid_after(day + datetime.timedelta(days=3650)).sign(key, hashes.SHA256()))
+    return base64.b64encode(cert.public_bytes(serialization.Encoding.DER)).decode()
+
+
+CERT_RULES = {"H-sdi-org", "H-sdi-key", "R-X509Certificate"}
+FAKE_CERT = "MIIBszCCAVmgAwIBAgIUQQ=="                 # base64, so the schemas accept it, but only 16 bytes: no certificate
+
+
+def _h_json(tmp_path, certs, te_name=None):
+    """The siros Annex H list (JSON) with the first service's certificates and, optionally, TEName replaced."""
+    doc = json.loads((DATA / "siros_pub_tl.json").read_text(encoding="utf-8"))
+    te = doc["LoTE"]["TrustedEntitiesList"][0]
+    te["TrustedEntityServices"][0]["ServiceInformation"]["ServiceDigitalIdentity"] = {"X509Certificates": certs}
+    if te_name:
+        te["TrustedEntityInformation"]["TEName"] = te_name
+    p = tmp_path / "h.json"
+    p.write_text(json.dumps(doc), encoding="utf-8")
+    return [f for f in validate(p).findings if f.rule in CERT_RULES]
+
+
+def test_certificate_of_a_real_list_matches():
+    assert not [f for f in validate(DATA / "siros_pub_tl.json").findings if f.rule in CERT_RULES]
+    assert not [f for f in validate(DATA / "H_pub_eaa_providers.xml").findings if f.rule in CERT_RULES]
+
+
+def test_organization_name_matches_any_te_name_value(tmp_path):
+    names = [{"lang": "en", "value": "Provider BE"}, {"lang": "fr", "value": "Fournisseur BE"}]
+    assert not _h_json(tmp_path, [{"val": _cert("Fournisseur BE")}], names)            # decision #6: any language
+    assert not _h_json(tmp_path, [_cert("Provider BE")], names)                         # a plain string is accepted too
+
+
+@pytest.mark.parametrize("org,why", [("Other Org", "is not one of the TEName values"),
+                                     ("provider be", "is not one of the TEName values"),   # strictly: case counts
+                                     (None, "has no organizationName")])
+def test_organization_name_must_match(tmp_path, org, why):
+    (f,) = _h_json(tmp_path, [{"val": _cert(org)}], [{"lang": "en", "value": "Provider BE"}])
+    assert f.rule == "H-sdi-org" and why in f.message and f.source["page"] == 65
+    assert f.location.endswith("/ServiceDigitalIdentity/X509Certificates/0")
+
+
+def test_several_certificates_one_key_and_subject(tmp_path):
+    from cryptography.hazmat.primitives.asymmetric import ec
+    key = ec.generate_private_key(ec.SECP256R1())
+    te = [{"lang": "en", "value": "Provider BE"}]
+    assert not _h_json(tmp_path, [_cert(key=key), _cert(key=key)], te)                  # renewed: same key and subject
+    found = _h_json(tmp_path, [_cert(), _cert(cn="Other")], te)                         # two keys, two subjects
+    assert [f.rule for f in found] == ["H-sdi-key", "H-sdi-key"]
+    assert "2 different public keys" in found[0].message and "different subject names" in found[1].message
+
+
+def test_value_that_is_not_a_certificate(tmp_path):
+    (f,) = _h_json(tmp_path, [FAKE_CERT], [{"lang": "en", "value": "Provider BE"}])
+    assert f.rule == "R-X509Certificate" and f.source["ref"] == "Clause 6.6.3.1" and f.source["line"] == 2170
+
+
+@pytest.mark.parametrize("name,profile", [("D_pid_providers.json", None), ("D_pid_providers.xml", None),
+                                          ("D_pid_providers.json", "LoTL")])
+def test_every_list_decodes_its_certificates(tmp_path, name, profile):
+    """R-X509Certificate (6.6.3.1) is a core rule: it applies to every list, not only to Annex H, and to every
+    ServiceDigitalIdentity (the services' and the pointers' to other lists)."""
+    p = _retyped(tmp_path, name, LOTL) if profile else tmp_path / name
+    text = p.read_text(encoding="utf-8") if profile else (DATA / name).read_text(encoding="utf-8")
+    good = re.search(r"MII[A-Za-z0-9+/=]{100,}", text).group(0)              # the list's (real) certificate
+    p.write_text(text.replace(good, FAKE_CERT), encoding="utf-8")
+    r = validate(p)
+    assert r.profile == (profile or "D")
+    found = [f for f in r.findings if f.rule in CERT_RULES]
+    assert [f.rule for f in found] == ["R-X509Certificate"] * 2 and len(r.findings) == 2
+    assert any("PointersToOtherLoTE" in f.location for f in found)
+    assert any("ServiceInformation" in f.location for f in found)
+    assert "R-X509Certificate" not in {n.rule for n in r.not_checked}             # checked: not in "Not checked"
+
+
+def test_certificate_checks_in_xml(tmp_path):
+    xml = (DATA / "H_pub_eaa_providers.xml").read_text(encoding="utf-8")
+    good = re.search(r"<X509Certificate>([^<]+)</X509Certificate>", xml).group(1)
+    p = tmp_path / "h.xml"
+    p.write_text(xml.replace(good, _cert("Other Org")), encoding="utf-8")
+    (f,) = [f for f in validate(p).findings if f.rule in CERT_RULES]
+    assert f.rule == "H-sdi-org" and f.location.endswith("lote:ServiceDigitalIdentity/lote:DigitalId/lote:X509Certificate")
+    nc = {n.rule for n in validate(DATA / "H_pub_eaa_providers.xml").not_checked}
+    assert not {"H-sdi-org", "H-sdi-key"} & nc                                       # checked now: not in "Not checked"

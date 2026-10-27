@@ -491,10 +491,16 @@
             "human": "Multiple certificates all relate to the same public key and have identical subject names.",
             "expression": null,
             "checkable": {
-              "status": "no",
-              "instrument": null,
-              "reason": "certificate-parsing",
-              "note": null
+              "status": "yes",
+              "instrument": {
+                "xml": "code",
+                "json": "code"
+              },
+              "reason": null,
+              "note": "the validator decodes the certificates (project_decisions_vs_etsi.md #6)"
+            },
+            "check": {
+              "type": "cert-same-key-subject"
             }
           }
         ],
@@ -512,13 +518,21 @@
           {
             "key": "H-sdi-org",
             "severity": "error",
-            "human": "Each certificate's subject has organizationName, strictly matching TEName.",
+            "human": "Each certificate's subject has organizationName, identical to at least one TEName value of the trusted entity (project_decisions_vs_etsi.md #6).",
             "expression": null,
             "checkable": {
-              "status": "no",
-              "instrument": null,
-              "reason": "certificate-parsing",
-              "note": null
+              "status": "yes",
+              "instrument": {
+                "xml": "code",
+                "json": "code"
+              },
+              "reason": null,
+              "note": "the validator decodes the certificates; 'the value' of a multilingual TEName is read as any one of its values (project_decisions_vs_etsi.md #6)"
+            },
+            "check": {
+              "type": "cert-org-matches",
+              "scope": "LoTE.TrustedEntitiesList.TrustedEntity",
+              "against": "TrustedEntityInformation.TEName"
             }
           }
         ],

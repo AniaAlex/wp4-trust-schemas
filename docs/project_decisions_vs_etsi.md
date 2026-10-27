@@ -96,6 +96,20 @@ The text defines no `Id` on the list. The Forge XSD allows one: `<xsd:attribute 
 - An `Id` does not make a reference by `Id` conforming. For an H list in XML, the reference must be `URI=""`: "Its ds:SignedInfo element shall contain a ds:Reference element with the URI attribute set to an empty string (i.e. URI=""), so as to refer to the entire document." (H.4 2), p. 66, line 3863). The profiles check it: `H-sig-ref-uri` in H (the text), and `D-sig-ref-uri` … `I-sig-ref-uri` in the other annexes (WP4 rule, #2). So in every profile an `Id` is accepted and signed with the rest of the document, but is not the signature's target; without a profile (the List of Trusted Lists), a reference by `Id` stays allowed.
 - Only the root has an `Id`. Forge also has none on other elements.
 
+## 6. A certificate's organizationName matches at least one `TEName` value
+
+`TEName` is a sequence of multilingual strings (6.5.1), but Table H.3 requires the organizationName of each listed certificate to "strictly match the value of the TEName component" (p. 65), as if there were one. Which value is meant is not said ([etsi_inconsistencies.md #1](etsi_inconsistencies.md#1-one-value-of-a-multilingual-tename)).
+
+**Decision.** For `H-sdi-org`, every organizationName in the subject of each certificate in the service's `ServiceDigitalIdentity` must be identical to **at least one** of the `TEName` values of the trusted entity providing the service, in any language. "Strictly" is read as identical character strings: no change of case, whitespace or Unicode normalisation.
+
+**Why.** It is the only reading every conforming list can meet: a provider whose certificate carries its name in the national language would fail the English-only reading, and the list does not say which language is the provider's own. It still rejects a certificate whose organizationName is not a name the list gives for the entity.
+
+**How it is checked.** By the validator's code, for XML and JSON lists of Annex H (`checkable`: `yes`, instrument `code` in both bindings). The schemas cannot check it: the certificate is a base64 string to them. The same code checks `H-sdi-key` (several certificates in one `ServiceDigitalIdentity` have the same public key and identical subject names). A value that is not a DER X.509 certificate is reported by the core rule `R-X509Certificate` (6.6.3.1), which applies to every list, and the H rules skip it.
+
+**Limits.**
+- Only Annex H. The same recommendation in 6.6.3.0 ("should strictly match", p. 34) is not checked for other lists, and the certificate content rules of Annexes D, E and I (`D-sdi-content`, …) are not checked yet: which subject attribute must carry the name and the registration number is still to be decided.
+- Only the current service information: certificates in `ServiceHistory` are not checked.
+
 ## Open decisions
 
 ### A. Digital identities in JSON: Forge objects or the text's strings; JWK and DID

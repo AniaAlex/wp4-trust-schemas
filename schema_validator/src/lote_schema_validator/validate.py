@@ -24,6 +24,9 @@ Layers, in order:
   XML   the track's XSD (lote_core.xsd), its Schematron (lote_core.sch), profile Schematron (generated/profiles/*.sch)
   JSON  the track's JSON Schema, or the profile's (generated/profiles/*.json allOf the explicit track), then the profile rules JSON
         Schema cannot express (x-rules-layer entries with a 'check', e.g. the 6-month NextUpdate rule)
+  both  the rules no schema language expresses, run by code (code_findings): every X509Certificate decodes as an X.509
+        certificate (R-X509Certificate, 6.6.3.1, every list), and the certificate checks of Annex H (H-sdi-key,
+        H-sdi-org; project_decisions_vs_etsi.md #6)
 Rule ids and citations:
   profile rules     the overlay element of the rule id (schemas/explicit/model/profiles/*.json): D-LoTEType-fixed
   core rules        the model constraint (R-...) or, for the other core Schematron patterns, the model source of their
@@ -638,7 +641,9 @@ def is_hit(n, owner, comp):
     return n.kind in ("leaf", "list", "struct", "wrapper") and n.owner == owner and n.comp and n.comp["name"] == comp["name"]
 
 
-def json_occurrences(C, doc, owner, comp, sub):
+def json_find(C, v, node, loc, owner, comp):
+    """(location, value, model place) of every place inside v (at model place node, location loc) that is component
+    comp of structure owner, or (comp None) a structure owner. A place found is not searched further."""
     out = []
 
     def walk(v, node, loc):
@@ -649,11 +654,16 @@ def json_occurrences(C, doc, owner, comp, sub):
                 continue
             here = f"{loc}/{k}"
             if is_hit(n, owner, comp):
-                out.extend(json_sub(x, here, sub))
+                out.append((here, x, n))
             elif n.kind != "leaf":
                 walk(x, n, here)
-    walk(doc, Node("doc", name="(document)"), "")
+    walk(v, node, loc)
     return out
+
+
+def json_occurrences(C, doc, owner, comp, sub):
+    return [o for loc, x, _ in json_find(C, doc, Node("doc", name="(document)"), "", owner, comp)
+            for o in json_sub(x, loc, sub)]
 
 
 def json_sub(v, loc, sub):
@@ -685,13 +695,14 @@ def xml_step(el):
     return name + (f"[{same.index(el) + 1}]" if len(same) > 1 else "")
 
 
-def xml_occurrences(C, root, owner, comp, sub):
+def xml_path(el):
+    return "/" + "/".join(xml_step(a) for a in reversed([el] + list(el.iterancestors())))
+
+
+def xml_find(C, el, node, owner, comp):
+    """(element, model place) of every element inside el (at model place node) that is component comp of structure
+    owner, or (comp None) a structure owner. An element found is not searched further."""
     out = []
-    path = lambda el: "/" + "/".join(xml_step(a) for a in reversed([el] + list(el.iterancestors())))
-    if comp is not None and is_attribute(comp):
-        name = comp["xml"]["form"].split()[-1] if " " in comp["xml"]["form"] else comp["name"]
-        return [{"location": path(root) + f"/@{name}", "value": short(root.get(name))}] \
-            if owner == C.root and root.get(name) is not None else []
 
     def walk(el, node):
         for ch in el:
@@ -701,11 +712,137 @@ def xml_occurrences(C, root, owner, comp, sub):
             if n is None:
                 continue
             if is_hit(n, owner, comp):
-                hits = [ch] if not sub else [d for d in ch.iter() if isinstance(d.tag, str) and local(d.tag) == sub[-1]]
-                out.extend({"location": path(h), "value": xml_value(h)} for h in hits)
+                out.append((ch, n))
             elif n.kind != "leaf":
                 walk(ch, n)
-    walk(root, Node("struct", C.root, None, None, local(root.tag)))
+    walk(el, node)
+    return out
+
+
+def xml_root_node(C, root):
+    return Node("struct", C.root, None, None, local(root.tag))
+
+
+def xml_occurrences(C, root, owner, comp, sub):
+    if comp is not None and is_attribute(comp):
+        name = comp["xml"]["form"].split()[-1] if " " in comp["xml"]["form"] else comp["name"]
+        return [{"location": xml_path(root) + f"/@{name}", "value": short(root.get(name))}] \
+            if owner == C.root and root.get(name) is not None else []
+    out = []
+    for ch, _ in xml_find(C, root, xml_root_node(C, root), owner, comp):
+        hits = [ch] if not sub else [d for d in ch.iter() if isinstance(d.tag, str) and local(d.tag) == sub[-1]]
+        out.extend({"location": xml_path(h), "value": xml_value(h)} for h in hits)
+    return out
+
+
+def read_list(path, is_xml):
+    """The list as parsed JSON or as the XML root element; None if it cannot be read (the findings say why)."""
+    try:
+        if is_xml:
+            from lxml import etree
+            return etree.parse(path, etree.XMLParser(resolve_entities=False, no_network=True)).getroot()
+        return json.load(open(path, encoding="utf-8"))
+    except Exception:
+        return None
+
+
+# ------------------------------------------------------------------ code checks: what no schema language expresses
+CODE_CHECKS = ("x509-certificate", "cert-same-key-subject", "cert-org-matches")   # the generator's CODE_ONLY check types
+
+
+def decode_cert(b64):
+    """An X509Certificate value of the list as a certificate, or the reason it is not one."""
+    import base64, binascii
+    from cryptography import x509
+    try:
+        return x509.load_der_x509_certificate(base64.b64decode("".join(b64.split()), validate=True)), None
+    except (binascii.Error, ValueError) as err:
+        return None, str(err) or type(err).__name__
+
+
+def certificates(C, sdi, node, loc, is_xml):
+    """(location, base64 value) of each X509Certificate in a ServiceDigitalIdentity (JSON: strings or {"val": ...})."""
+    comp = next(c for c in C.S["ServiceDigitalIdentity"]["components"] if c["name"] == "X509Certificate")
+    if is_xml:
+        return [(xml_path(el), (el.text or "").strip()) for el, _ in xml_find(C, sdi, node, "ServiceDigitalIdentity", comp)]
+    out = []
+    for lloc, v, _ in json_find(C, sdi, node, loc, "ServiceDigitalIdentity", comp):
+        for i, x in enumerate(v if isinstance(v, list) else [v]):
+            val = x.get("val") if isinstance(x, dict) else x
+            if isinstance(val, str):
+                out.append((f"{lloc}/{i}" if isinstance(v, list) else lloc, val))
+    return out
+
+
+def multilang_values(v, is_xml):
+    """The texts of a multilingual component (TEName): every language."""
+    if is_xml:
+        return [" ".join(k.itertext()) for k in v if isinstance(k.tag, str)]
+    return [x["value"] for x in v if isinstance(x, dict) and isinstance(x.get("value"), str)] if isinstance(v, list) else []
+
+
+def code_findings(C, annex, path, is_xml):
+    """Findings of the rules whose check is run here (the generator's CODE_ONLY types): for every list, the core rule
+    R-X509Certificate (6.6.3.1: each X509Certificate decodes as a DER X.509 certificate); for Annex H, also the
+    certificate checks H-sdi-key and H-sdi-org (project_decisions_vs_etsi.md #6). A value that is not a certificate is
+    reported once, by R-X509Certificate; the H rules skip it."""
+    core = [(sname, c) for sname, st in C.S.items() for c in st.get("constraint", [])
+            if (c.get("check") or {}).get("type") in CODE_CHECKS]
+    rules = []
+    for fn in glob.glob(os.path.join(OVERLAYS, f"{annex}_*.json")) if annex else ():
+        for e in json.load(open(fn, encoding="utf-8"))["differential"]["element"]:
+            rules += [(e, c) for c in e.get("constraint", []) if (c.get("check") or {}).get("type") in CODE_CHECKS]
+    doc = read_list(path, is_xml) if core or rules else None
+    if doc is None:
+        return []
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.x509.oid import NameOID
+    start = xml_root_node(C, doc) if is_xml else Node("doc", name="(document)")
+    find = (lambda v, n, loc, o, c: [(xml_path(el), el, nn) for el, nn in xml_find(C, v, n, o, c)]) if is_xml else \
+        (lambda v, n, loc, o, c: json_find(C, v, n, loc, o, c))
+    out = []
+
+    def certs(sdi, node, loc):
+        """The certificates of a ServiceDigitalIdentity that decode; R-X509Certificate reports the others."""
+        return [(cloc, cert) for cloc, b64 in certificates(C, sdi, node, loc, is_xml)
+                for cert in [decode_cert(b64)[0]] if cert is not None]
+    for sname, c in core:                                                  # x509-certificate, on ServiceDigitalIdentity
+        for loc, sdi, node in find(doc, start, "", sname, None):          # every one, wherever it is in the list
+            for cloc, b64 in certificates(C, sdi, node, loc, is_xml):
+                cert, err = decode_cert(b64)
+                if cert is None:
+                    out.append(Finding("rules", c["key"], cloc, f"Not an X.509 certificate (DER, base64): {err}.",
+                                       C.core_rule(c["key"])))
+    for e, c in rules:
+        ck, src = c["check"], C.profile(c["key"])
+        owner, comp, _ = model_target(C, e["path"])                       # ServiceInformation.ServiceDigitalIdentity
+        if ck["type"] == "cert-same-key-subject":
+            for loc, sdi, node in find(doc, start, "", owner, comp):
+                cs = certs(sdi, node, loc)
+                keys = {cert.public_key().public_bytes(serialization.Encoding.DER,
+                                                       serialization.PublicFormat.SubjectPublicKeyInfo) for _, cert in cs}
+                subjects = {cert.subject.rfc4514_string() for _, cert in cs}
+                if len(keys) > 1:
+                    out.append(Finding("rules", c["key"], loc, f"The {len(cs)} certificates relate to {len(keys)} "
+                                                                "different public keys; they must all relate to the same one.", src))
+                if len(subjects) > 1:
+                    out.append(Finding("rules", c["key"], loc, "The certificates have different subject names: "
+                                       + "; ".join(sorted(subjects)) + ".", src))
+        elif ck["type"] == "cert-org-matches":
+            s_owner, s_comp, _ = model_target(C, ck["scope"])               # TrustedEntity
+            a_owner, a_comp, _ = model_target(C, ck["scope"] + "." + ck["against"])   # TrustedEntityInformation.TEName
+            for tloc, te, tnode in find(doc, start, "", s_owner, s_comp):
+                names = [x for _, v, _ in find(te, tnode, tloc, a_owner, a_comp) for x in multilang_values(v, is_xml)]
+                for loc, sdi, node in find(te, tnode, tloc, owner, comp):
+                    for cloc, cert in certs(sdi, node, loc):
+                        orgs = [a.value for a in cert.subject.get_attributes_for_oid(NameOID.ORGANIZATION_NAME)]
+                        if not orgs:
+                            out.append(Finding("rules", c["key"], cloc, f"The certificate's subject "
+                                               f"({cert.subject.rfc4514_string()}) has no organizationName.", src))
+                        for o in orgs:
+                            if o not in names:
+                                out.append(Finding("rules", c["key"], cloc, f"The organizationName '{o}' is not one of "
+                                                   f"the TEName values {names}.", src))
     return out
 
 
@@ -729,14 +866,7 @@ def not_checked(C, annex, path, is_xml):
                     if not checked(c):
                         owner, comp, sub = model_target(C, e["path"])
                         rules.append((c, [(owner, comp, sub, e["path"])], C.profile(c["key"])))
-    try:
-        if is_xml:
-            from lxml import etree
-            doc = etree.parse(path, etree.XMLParser(resolve_entities=False, no_network=True)).getroot()
-        else:
-            doc = json.load(open(path, encoding="utf-8"))
-    except Exception:
-        doc = None                                        # unreadable: the findings say why; no occurrences
+    doc = read_list(path, is_xml)                         # None: unreadable, the findings say why; no occurrences
     reasons, instruments = C.model.get("checkable_reasons", {}), C.model.get("checkable_instruments", {})
     out = []
     for c, targets, src in rules:
@@ -878,6 +1008,7 @@ def validate(path, profile=None, track=None):
     C = Citations(tr)
     gen = TRACKS[tr]["gen"]
     findings, corrected = validate_xml(path, annex, C, gen) if is_xml else (validate_json(path, annex, C, gen), False)
+    findings += code_findings(C, annex, path, is_xml)
     return Report(path, tr, why, profile, findings, corrected, profile_why, declared, warnings,
                   not_checked(C, annex, path, is_xml))
 

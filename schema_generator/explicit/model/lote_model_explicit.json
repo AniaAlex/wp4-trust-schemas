@@ -29,7 +29,7 @@
   "checkable_instruments": {
     "json-schema": "the generated JSON Schema",
     "schematron": "the generated Schematron (XML)",
-    "code": "the validator's code, for a check the schema language cannot express (comparing dates in JSON)",
+    "code": "the validator's code, for a check the schema languages cannot express: comparing dates in JSON, decoding the X.509 certificates in the list",
     "signature-verifier": "a signature verifier (JAdES / XAdES), which this project does not have yet",
     "not-applicable": "the rule does not exist in this binding"
   },
@@ -3161,6 +3161,35 @@
             "quote": "When using PKI public-key technology, this component shall contain at least: one X509Certificate element or an X509SKI element.",
             "page": 34,
             "line": 2151
+          }
+        },
+        {
+          "key": "R-X509Certificate",
+          "severity": "error",
+          "human": "Every X509Certificate is an X.509 certificate: its base64 value decodes to a DER-encoded certificate.",
+          "expression": null,
+          "checkable": {
+            "status": "yes",
+            "instrument": {
+              "xml": "code",
+              "json": "code"
+            },
+            "reason": null,
+            "note": "the validator decodes the certificates; JSON Schema and XSD check only that the value is base64"
+          },
+          "components": [
+            "X509Certificate"
+          ],
+          "clause": "6.6.3.1",
+          "check": {
+            "type": "x509-certificate",
+            "component": "X509Certificate"
+          },
+          "source": null,
+          "citation": {
+            "quote": "The value of the string shall be a Base64 encoded X.509 certificate [12].",
+            "page": 34,
+            "line": 2170
           }
         }
       ]
